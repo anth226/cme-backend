@@ -6,6 +6,8 @@ import {
   ManyToOne,
   JoinColumn,
   ManyToMany,
+  CreateDateColumn,
+  UpdateDateColumn,
 } from 'typeorm';
 import { GuildMembers } from '../guild-members/guild-users.entity';
 import { User } from '../users/user.entity';
@@ -19,6 +21,18 @@ export class Guild {
     nullable: false,
   })
   name: string;
+
+  @CreateDateColumn({
+    name: 'created_at',
+    default: 'CURRENT_TIMESTAMP',
+  })
+  createdAt: Date;
+
+  @UpdateDateColumn({
+    name: 'updated_at',
+    default: 'CURRENT_TIMESTAMP',
+  })
+  updatedAt: Date;
 
   @OneToMany(() => GuildMembers, (guildMembers) => guildMembers.guild, {
     eager: true,
