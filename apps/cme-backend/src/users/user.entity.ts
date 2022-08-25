@@ -8,6 +8,7 @@ import {
 import { Village } from '../villages/village.entity';
 import { Exclude } from 'class-transformer';
 import { Attack } from '../attacks/attack.entity';
+import { GuildMembers } from '../guild-members/guild-users.entity';
 
 @Entity({ name: 'users' })
 @Unique(['email', 'username'])
@@ -46,6 +47,8 @@ export class User {
   @OneToMany(() => Attack, (attack) => attack.defender)
   attacksTo: Village[];
 
+  @OneToMany(() => GuildMembers, (guildUser) => guildUser.user)
+  guildUsers: GuildMembers[];
   // Avoid returning unnecessary data, and protect password's hash
   toJSON() {
     return {
