@@ -101,23 +101,6 @@ export class init1604249012717 implements MigrationInterface {
                 created_at timestamptz NOT NULL DEFAULT NOW(),
                 updated_at timestamptz NOT NULL DEFAULT NOW()
             );`,
-        `CREATE TABLE "guilds" (
-                "id" serial NOT NULL,
-                PRIMARY KEY ("id"),
-                "created_at" timestamptz NULL,
-                "updated_at" timestamptz NULL,
-                "guildMembers" integer NULL,
-                "name" character(250) NOT NULL DEFAULT 'guild'
-            );`,
-        `CREATE TABLE "guilds_users" (
-                "id" serial NOT NULL,
-                PRIMARY KEY ("id"),
-                "created_at" timestamptz NULL,
-                "updated_at" timestamptz NULL,
-                "isAdmin" boolean NOT NULL DEFAULT false,
-                "guild_id" integer NOT NULL,
-                "user_id" integer NOT NULL
-            );`,
         `CREATE TABLE orders (
                 id serial PRIMARY KEY,
                 facility_id int NOT NULL REFERENCES facilities (id),
@@ -146,8 +129,6 @@ export class init1604249012717 implements MigrationInterface {
         'industries',
         'villages',
         'users',
-        'guilds',
-        'guilds_users',
       ],
       (table) => queryRunner.dropTable(table),
     );
