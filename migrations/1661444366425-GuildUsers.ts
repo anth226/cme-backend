@@ -8,8 +8,8 @@ export class GuildUsers1661444366425 implements MigrationInterface {
                 "created_at" timestamptz NULL DEFAULT now(),
                 "updated_at" timestamptz NULL DEFAULT now(),
                 "isAdmin" boolean NOT NULL DEFAULT false,
-                "guild_id" integer NOT NULL,
-                "user_id" integer NOT NULL
+                "guild_id" integer NOT NULL REFERENCES "guilds" ("id"),
+                "user_id" integer NOT NULL REFERENCES "users" ("id")
             );`);
   }
 
