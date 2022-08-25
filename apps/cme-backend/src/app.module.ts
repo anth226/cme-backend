@@ -24,6 +24,8 @@ import { PublicModule } from './public/public.module';
 import { UserGlobalMkcModule } from './user-global-mkc/user-global-mkc.module';
 import { MkcModule } from './mkc/mkc.module';
 import * as path from 'path';
+import { GuildModule } from './guild/guild.module';
+import { GuildMembersModule } from './guild-members/guild-members.module';
 
 @Module({
   imports: [
@@ -59,6 +61,8 @@ import * as path from 'path';
     PublicModule,
     UserGlobalMkcModule,
     MkcModule,
+    GuildModule,
+    GuildMembersModule,
   ],
   controllers: [AppController],
   providers: [AppService],
