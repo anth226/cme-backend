@@ -48,7 +48,7 @@ export class User {
   attacksTo: Village[];
 
   @OneToMany(() => GuildMembers, (guildUser) => guildUser.user)
-  guildUsers: GuildMembers[];
+  memberGuilds: GuildMembers[];
   // Avoid returning unnecessary data, and protect password's hash
   toJSON() {
     return {

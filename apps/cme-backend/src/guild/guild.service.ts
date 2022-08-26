@@ -6,17 +6,16 @@ import { User } from '../users/user.entity';
 import { CreateGuildDto } from './dto/create-guild.dto';
 import { InviteMembersToGuildDto } from './dto/invite-members-to-guild.dto';
 import { Guild } from './guild.entity';
-import { GuildRepository } from './guild.repository';
 
 @Injectable()
 export class GuildService {
   constructor(
-    @InjectRepository(GuildRepository)
-    private readonly guildRepository: GuildRepository,
-    @InjectRepository(User)
-    private usersRepository: Repository<User>,
+    @InjectRepository(Guild)
+    private readonly guildRepository: Repository<Guild>,
     @InjectRepository(GuildMembers)
-    private guildMembersRepository: Repository<GuildMembers>,
+    private readonly guildMembersRepository: Repository<GuildMembers>,
+    @InjectRepository(User)
+    private readonly usersRepository: Repository<User>,
   ) {}
   async create(guild: CreateGuildDto, userId: number): Promise<Guild> {
     const newGuild = new Guild();
@@ -46,13 +45,19 @@ export class GuildService {
     const guild = await this.guildRepository.findOneOrFail(guildInvite.id, {
       relations: ['guildMembers'],
     });
-    await this.usersRepository.findOneOrFail(adminId);
-    if (
-      guild.guildMembers.find((member) => member.user.id === adminId)
-        .isAdmin !== true
-    ) {
-      throw new Error('You are not the admin of this guild');
+    await this.usersRepository.findOneOrFail(adminId).catch(() => {
+      throw new Error('Error finding admin');
+    });
+
+    // check if user is in guild
+    const user = guild.guildMembers.find(
+      (guildMember) => guildMember.user.id === adminId,
+    );
+
+    if (!user || !user.isAdmin) {
+      throw new Error('Only admin can invite users to guild');
     }
+
     const members = await this.usersRepository.findByIds(guildInvite.members);
     const tempGuildMembers = [];
     members.forEach(async (member) => {
@@ -70,19 +75,18 @@ export class GuildService {
       relations: ['guildMembers'],
     });
     await this.usersRepository.findOneOrFail(userId);
-    // find admin in guild
-    const guildAdmin = guild.guildMembers.find(
-      (member) => member.user.id === userId,
-    );
-    if (!guildAdmin.isAdmin) {
-      throw new Error('You are not a member of this guild');
+    const user = guild.guildMembers.find((member) => member.user.id === userId);
+    // check if user is in guild
+    if (!user) {
+      throw new Error('User is not in this guild');
     }
     // if admin leaves guild, delete existing members & guild
-    if (guildAdmin.isAdmin) {
+    if (user.isAdmin) {
       this.guildMembersRepository.delete({ guild: guild });
       this.guildRepository.remove(guild);
+    } else {
+      this.guildMembersRepository.remove(user);
     }
-    this.guildMembersRepository.delete(guildAdmin.id);
     return guild;
   }
 
@@ -91,11 +95,11 @@ export class GuildService {
       relations: ['guildMembers'],
     });
     await this.usersRepository.findOneOrFail(adminId);
-    // find admin in guild
-    const guildAdmin = guild.guildMembers.find(
+    const user = guild.guildMembers.find(
       (member) => member.user.id === adminId,
     );
-    if (!guildAdmin.isAdmin) {
+
+    if (!user || !user.isAdmin) {
       throw new Error('You are not admin of this guild');
     }
 

@@ -2,19 +2,16 @@ import {
   Body,
   Controller,
   Delete,
-  Get,
   Param,
   Post,
   Put,
   Request,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth } from '@nestjs/swagger';
 import { CreateGuildDto } from './dto/create-guild.dto';
 import { InviteMembersToGuildDto } from './dto/invite-members-to-guild.dto';
 import { GuildService } from './guild.service';
-
 @Controller('guild')
-@ApiTags('guild')
 @ApiBearerAuth()
 export class GuildController {
   constructor(private guildService: GuildService) {}

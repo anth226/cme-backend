@@ -1,18 +1,16 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { GuildMembersRepository } from '../guild-members/guild-users.repository';
-import { UserRepository } from '../users/user.repository';
+import { GuildMembers } from '../guild-members/guild-users.entity';
+import { User } from '../users/user.entity';
 import { GuildController } from './guild.controller';
-import { GuildRepository } from './guild.repository';
+import { Guild } from './guild.entity';
 import { GuildService } from './guild.service';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([
-      GuildRepository,
-      UserRepository,
-      GuildMembersRepository,
-    ]),
+    TypeOrmModule.forFeature([Guild]),
+    TypeOrmModule.forFeature([User]),
+    TypeOrmModule.forFeature([GuildMembers]),
   ],
   providers: [GuildService],
   controllers: [GuildController],
