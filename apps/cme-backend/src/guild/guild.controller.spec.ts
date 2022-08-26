@@ -1,5 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { mock } from 'jest-mock-extended';
 import { GuildController } from './guild.controller';
+import { GuildService } from './guild.service';
 
 describe('GuildController', () => {
   let controller: GuildController;
@@ -7,6 +9,12 @@ describe('GuildController', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [GuildController],
+      providers: [
+        {
+          provide: GuildService,
+          useValue: mock<GuildService>(),
+        },
+      ],
     }).compile();
 
     controller = module.get<GuildController>(GuildController);

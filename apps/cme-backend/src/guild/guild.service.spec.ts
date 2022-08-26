@@ -1,4 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { mock } from 'jest-mock-extended';
+import { Repository } from 'typeorm';
+import { Guild } from './guild.entity';
 import { GuildService } from './guild.service';
 
 describe('GuildService', () => {
@@ -6,7 +9,13 @@ describe('GuildService', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [GuildService],
+      providers: [
+        GuildService,
+        {
+          provide: 'GuildRepository',
+          useValue: mock<Repository<Guild>>(),
+        },
+      ],
     }).compile();
 
     service = module.get<GuildService>(GuildService);

@@ -40,18 +40,18 @@ export class GuildService {
 
   async invite(
     guildInvite: InviteMembersToGuildDto,
-    adminId: number,
+    requesterId: number,
   ): Promise<Guild> {
     const guild = await this.guildRepository.findOneOrFail(guildInvite.id, {
       relations: ['guildMembers'],
     });
-    await this.usersRepository.findOneOrFail(adminId).catch(() => {
+    await this.usersRepository.findOneOrFail(requesterId).catch(() => {
       throw new Error('Error finding admin');
     });
 
     // check if user is in guild
     const user = guild.guildMembers.find(
-      (guildMember) => guildMember.user.id === adminId,
+      (guildMember) => guildMember.user.id === requesterId,
     );
 
     if (!user || !user.isAdmin) {
@@ -90,13 +90,13 @@ export class GuildService {
     return guild;
   }
 
-  async remove(guildId: number, adminId: number): Promise<Guild> {
+  async remove(guildId: number, requesterId: number): Promise<Guild> {
     const guild = await this.guildRepository.findOneOrFail(guildId, {
       relations: ['guildMembers'],
     });
-    await this.usersRepository.findOneOrFail(adminId);
+    await this.usersRepository.findOneOrFail(requesterId);
     const user = guild.guildMembers.find(
-      (member) => member.user.id === adminId,
+      (member) => member.user.id === requesterId,
     );
 
     if (!user || !user.isAdmin) {
