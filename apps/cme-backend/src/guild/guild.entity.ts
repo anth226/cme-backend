@@ -24,13 +24,13 @@ export class Guild {
 
   @CreateDateColumn({
     name: 'created_at',
-    default: 'CURRENT_TIMESTAMP',
+    default: 'now()',
   })
   createdAt: Date;
 
   @UpdateDateColumn({
     name: 'updated_at',
-    default: 'CURRENT_TIMESTAMP',
+    default: 'now()',
   })
   updatedAt: Date;
 

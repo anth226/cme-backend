@@ -19,13 +19,13 @@ export class GuildMembers {
 
   @CreateDateColumn({
     name: 'created_at',
-    default: 'CURRENT_TIMESTAMP',
+    default: 'now()',
   })
   createdAt: Date;
 
   @UpdateDateColumn({
     name: 'updated_at',
-    default: 'CURRENT_TIMESTAMP',
+    default: 'now()',
   })
   updatedAt: Date;
 
@@ -38,7 +38,7 @@ export class GuildMembers {
   })
   guild: Guild;
 
-  @ManyToOne(() => User, (user) => user.guildUsers, {
+  @ManyToOne(() => User, (user) => user.memberGuilds, {
     eager: true,
   })
   @JoinColumn({
