@@ -29,7 +29,7 @@ export class GuildController {
     return this.guildService.invite(guildInvite, req.user.id);
   }
 
-  @Put('leave:id')
+  @Put(':id/leave')
   leave(@Request() req, @Param('id') id: string) {
     return this.guildService.leave(parseInt(id), req.user.id);
   }
