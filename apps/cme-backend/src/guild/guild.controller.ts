@@ -18,12 +18,12 @@ export class GuildController {
 
   @Post()
   create(@Request() req, @Body() guild: CreateGuildDto) {
-    return this.guildService.create(guild, req.user.id);
+    return this.guildService.create(guild, req);
   }
 
   @Post('invite')
   invite(@Request() req, @Body() guildInvite: InviteMembersToGuildDto) {
-    return this.guildService.invite(guildInvite, req.user.id);
+    return this.guildService.invite(guildInvite, req);
   }
 
   @Put(':id/leave')
