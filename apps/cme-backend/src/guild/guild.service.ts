@@ -21,34 +21,35 @@ export class GuildService {
     const userId = req.user.id;
     const newGuild = new Guild();
     newGuild.name = guild.name;
-    const guildResponse = await this.guildRepository.save(newGuild);
+    const guildResponse: Guild = await this.guildRepository.save(newGuild);
     // add admin to guild
     const guildMembers = new GuildMembers();
     guildMembers.guild = guildResponse;
     guildMembers.user = await this.usersRepository.findOneOrFail(userId);
     guildMembers.isAdmin = true;
-    await this.guildMembersRepository
-      .save(guildMembers)
-      .catch(() => {
-        throw new Error('Error adding user to guild');
-      })
-      .catch(() => {
-        this.guildRepository.remove(guildResponse);
-        throw new Error('Error adding user to guild');
-      });
+    const res: GuildMembers = await this.guildMembersRepository.save(
+      guildMembers,
+    );
+    if (!res) {
+      this.guildRepository.remove(guildResponse);
+      throw new Error('Error adding admin to guild');
+    }
     return guildResponse;
   }
 
   async invite(guildInvite: InviteMembersToGuildDto, req: any): Promise<Guild> {
-    const guild = await this.guildRepository.findOneOrFail(guildInvite.id, {
-      relations: ['guildMembers'],
-    });
-    await this.usersRepository.findOneOrFail(req.user.id).catch(() => {
+    const guild: Guild = await this.guildRepository.findOneOrFail(
+      guildInvite.id,
+      {
+        relations: ['guildMembers'],
+      },
+    );
+    await this.usersRepository.findOneOrFail(req?.user?.id).catch(() => {
       throw new Error('Error finding admin');
     });
 
     // check if user is in guild
-    const user = guild.guildMembers.find(
+    const user: GuildMembers = guild?.guildMembers?.find(
       (guildMember) => guildMember.user.id === req.user.id,
     );
 
@@ -56,7 +57,9 @@ export class GuildService {
       throw new Error('Only admin can invite users to guild');
     }
 
-    const members = await this.usersRepository.findByIds(guildInvite.members);
+    const members: User[] = await this.usersRepository.findByIds(
+      guildInvite.members,
+    );
     const tempGuildMembers = [];
     members.forEach(async (member) => {
       const guildMembers = new GuildMembers();
@@ -69,17 +72,19 @@ export class GuildService {
   }
 
   async leave(guildId: number, userId: number): Promise<Guild> {
-    const guild = await this.guildRepository.findOneOrFail(guildId, {
+    const guild: Guild = await this.guildRepository.findOneOrFail(guildId, {
       relations: ['guildMembers'],
     });
     await this.usersRepository.findOneOrFail(userId);
-    const user = guild.guildMembers.find((member) => member.user.id === userId);
+    const user: GuildMembers = guild?.guildMembers?.find(
+      (member) => member.user.id === userId,
+    );
     // check if user is in guild
     if (!user) {
       throw new Error('User is not in this guild');
     }
     // if admin leaves guild, delete existing members & guild
-    if (user.isAdmin) {
+    if (user?.isAdmin) {
       this.guildMembersRepository.delete({ guild: guild });
       this.guildRepository.remove(guild);
     } else {
@@ -89,11 +94,11 @@ export class GuildService {
   }
 
   async remove(guildId: number, requesterId: number): Promise<Guild> {
-    const guild = await this.guildRepository.findOneOrFail(guildId, {
+    const guild: Guild = await this.guildRepository.findOneOrFail(guildId, {
       relations: ['guildMembers'],
     });
     await this.usersRepository.findOneOrFail(requesterId);
-    const user = guild.guildMembers.find(
+    const user: GuildMembers = guild?.guildMembers?.find(
       (member) => member.user.id === requesterId,
     );
 
