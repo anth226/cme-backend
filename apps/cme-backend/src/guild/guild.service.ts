@@ -17,7 +17,8 @@ export class GuildService {
     @InjectRepository(User)
     private readonly usersRepository: Repository<User>,
   ) {}
-  async create(guild: CreateGuildDto, userId: number): Promise<Guild> {
+  async create(guild: CreateGuildDto, req: any): Promise<Guild> {
+    const userId = req.user.id;
     const newGuild = new Guild();
     newGuild.name = guild.name;
     const guildResponse = await this.guildRepository.save(newGuild);
@@ -38,20 +39,17 @@ export class GuildService {
     return guildResponse;
   }
 
-  async invite(
-    guildInvite: InviteMembersToGuildDto,
-    requesterId: number,
-  ): Promise<Guild> {
+  async invite(guildInvite: InviteMembersToGuildDto, req: any): Promise<Guild> {
     const guild = await this.guildRepository.findOneOrFail(guildInvite.id, {
       relations: ['guildMembers'],
     });
-    await this.usersRepository.findOneOrFail(requesterId).catch(() => {
+    await this.usersRepository.findOneOrFail(req.user.id).catch(() => {
       throw new Error('Error finding admin');
     });
 
     // check if user is in guild
     const user = guild.guildMembers.find(
-      (guildMember) => guildMember.user.id === requesterId,
+      (guildMember) => guildMember.user.id === req.user.id,
     );
 
     if (!user || !user.isAdmin) {

@@ -5,13 +5,14 @@ import { pg } from 'pg';
 import * as fs from 'fs';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from '../../../users/user.entity';
-import { ConfigModule } from '../../../config/config.module';
-import { ConfigService } from '../../../config/config.service';
+// import { ConfigModule } from '../../../config/config.module';
+// import { ConfigService } from '../../../config/config.service';
 import { GuildModule } from '../../guild.module';
 import { Guild } from '../../guild.entity';
-
+import { AppModule } from '../../../app.module';
 describe('Guilds integration', () => {
   let app: INestApplication;
+  let htt: request.SuperTest<request.Test>;
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({

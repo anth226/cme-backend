@@ -3,14 +3,10 @@ import {
   PrimaryGeneratedColumn,
   OneToMany,
   Column,
-  ManyToOne,
-  JoinColumn,
-  ManyToMany,
   CreateDateColumn,
   UpdateDateColumn,
 } from 'typeorm';
 import { GuildMembers } from '../guild-members/guild-users.entity';
-import { User } from '../users/user.entity';
 
 @Entity({ name: 'guilds' })
 export class Guild {
@@ -24,13 +20,13 @@ export class Guild {
 
   @CreateDateColumn({
     name: 'created_at',
-    default: 'now()',
+    default: 'NOW()',
   })
   createdAt: Date;
 
   @UpdateDateColumn({
     name: 'updated_at',
-    default: 'now()',
+    default: 'NOW()',
   })
   updatedAt: Date;
 
