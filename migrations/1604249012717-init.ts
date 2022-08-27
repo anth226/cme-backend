@@ -1,4 +1,4 @@
-import { MigrationInterface, QueryRunner } from 'typeorm';
+import { MigrationInterface, QueryRunner, Table } from 'typeorm';
 import * as Promise from 'bluebird';
 
 export class init1604249012717 implements MigrationInterface {
