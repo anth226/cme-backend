@@ -61,6 +61,8 @@ describe('GuildService', () => {
     userRepository = module.get<Repository<User>>(getRepositoryToken(User));
   });
   it('should create a guild', async () => {
+    const dto = new CreateGuildDto();
+    dto.name = 'Test';
     const guild = new Guild();
     guild.name = 'Test';
     guild.id = 1;
@@ -81,8 +83,6 @@ describe('GuildService', () => {
       } as any;
     });
 
-    const dto = new CreateGuildDto();
-    dto.name = 'Test';
     const res = await service
       .create(dto, { user: { id: 'test' } })
       .then((res) => {
