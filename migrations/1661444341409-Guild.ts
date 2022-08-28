@@ -4,11 +4,10 @@ const DB_GUILDS_NAME = 'guilds';
 export class Guild1661444341409 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`CREATE TABLE ${DB_GUILDS_NAME} (
-                "id" serial NOT NULL,
-                PRIMARY KEY ("id"),
-                "created_at" timestamptz NULL DEFAULT now(),
-                "updated_at" timestamptz NULL DEFAULT now(),
-                "name" character(250) NOT NULL DEFAULT 'guild'
+                id serial PRIMARY KEY,
+                created_at timestamptz NULL DEFAULT now(),
+                updated_at timestamptz NULL DEFAULT now(),
+                name character(250) NOT NULL DEFAULT 'guild'
             );`);
   }
 
