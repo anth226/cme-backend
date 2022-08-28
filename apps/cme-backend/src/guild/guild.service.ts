@@ -17,7 +17,10 @@ export class GuildService {
     @InjectRepository(User)
     private readonly usersRepository: Repository<User>,
   ) {}
-  async create(guild: CreateGuildDto, req: any): Promise<Guild> {
+  async create(
+    guild: CreateGuildDto,
+    req: { user: { id: number } },
+  ): Promise<Guild> {
     const userId = req.user.id;
     const newGuild = new Guild();
     newGuild.name = guild.name;
@@ -37,18 +40,23 @@ export class GuildService {
     return guildResponse;
   }
 
-  async invite(guildInvite: InviteMembersToGuildDto, req: any): Promise<Guild> {
+  async invite(
+    guildInvite: InviteMembersToGuildDto,
+    req: { user: { id: number } },
+  ): Promise<Guild> {
     const guild: Guild = await this.guildRepository.findOneOrFail(
       guildInvite.id,
       {
         relations: ['guildMembers'],
       },
     );
-    try {
-      await this.usersRepository.findOneOrFail(req?.user?.id);
-    } catch (e) {
-      throw new Error('You are not admin of this guild');
-    }
+    // try {
+    await this.usersRepository.findOneOrFail(req?.user?.id).catch(() => {
+      throw new Error('User is not in this guild');
+    });
+    // } catch (e) {
+    //   throw new Error('You are not admin of this guild');
+    // }
 
     // check if user is in guild
     const user: GuildMembers = guild?.guildMembers?.find(
@@ -73,13 +81,17 @@ export class GuildService {
     return guild;
   }
 
-  async leave(guildId: number, userId: number): Promise<Guild> {
+  async leave(guildId: number, req: { user: { id: number } }): Promise<Guild> {
     const guild: Guild = await this.guildRepository.findOneOrFail(guildId, {
       relations: ['guildMembers'],
     });
-    await this.usersRepository.findOneOrFail(userId);
+    try {
+      await this.usersRepository.findOneOrFail(req.user.id);
+    } catch {
+      throw new Error('You are not in this guild');
+    }
     const user: GuildMembers = guild?.guildMembers?.find(
-      (member) => member.user.id === userId,
+      (member) => member.user.id === req.user.id,
     );
     // check if user is in guild
     if (!user) {
