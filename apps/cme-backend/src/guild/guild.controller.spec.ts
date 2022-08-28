@@ -1,108 +1,65 @@
 import { Test } from '@nestjs/testing';
-import { mock } from 'jest-mock-extended';
 import { CreateGuildDto } from './dto/create-guild.dto';
 import { InviteMembersToGuildDto } from './dto/invite-members-to-guild.dto';
 import { GuildController } from './guild.controller';
 import { GuildService } from './guild.service';
 
-describe('GuildColtroller', () => {
+describe('GuildController', () => {
   let guildController: GuildController;
-  let guildService: GuildService;
-
+  const mockGuildService = {
+    create: jest.fn((dto) => {
+      return dto;
+    }),
+    invite: jest.fn((dto) => {
+      return dto;
+    }),
+    leave: jest.fn((dto) => {
+      return {};
+    }),
+    remove: jest.fn((dto) => {
+      return {};
+    }),
+  };
   beforeEach(async () => {
-    const moduleRef = await Test.createTestingModule({
+    const module = await Test.createTestingModule({
       controllers: [GuildController],
-      providers: [
-        {
-          provide: GuildService,
-          useValue: mock<GuildService>(),
-        },
-      ],
-    }).compile();
+      providers: [GuildService],
+    })
+      .overrideProvider(GuildService)
+      .useValue(mockGuildService)
+      .compile();
 
-    guildService = moduleRef.get<GuildService>(GuildService);
-    guildController = moduleRef.get<GuildController>(GuildController);
+    guildController = module.get<GuildController>(GuildController);
   });
 
-  describe('create', () => {
-    it('should create a guild', async () => {
-      const result: any = {};
-      jest.spyOn(guildService, 'create').mockImplementation(() => result);
-      const dto = new CreateGuildDto();
-      dto.name = 'test';
-      expect(
-        await guildController.create(
-          {
-            user: {
-              id: 1,
-            },
-          },
-          dto,
-        ),
-      ).toBe(result);
-    });
-
-    // should invite members to guild
-    it('should invite members to guild', async () => {
-      const result: any = {
-        id: 1,
-        name: 'string',
-      };
-      jest.spyOn(guildService, 'invite').mockImplementation(() => result);
-      const dto = new InviteMembersToGuildDto();
-      dto.members = [1, 2];
-      expect(
-        await guildController.invite(
-          {
-            user: {
-              id: 1,
-            },
-          },
-          dto,
-        ),
-      ).toBe(result);
-    });
+  it('should be defined', () => {
+    expect(guildController).toBeDefined();
   });
 
-  // leave guild
+  const createGuildDto = new CreateGuildDto();
+  createGuildDto.name = 'test';
+  it('should create a guild', async () => {
+    expect(guildController.create({ user: { id: 1 } }, createGuildDto)).toEqual(
+      createGuildDto,
+    );
+  });
+
+  it('should invite members to guild', async () => {
+    const inviteMembersToGuildDto = new InviteMembersToGuildDto();
+    inviteMembersToGuildDto.members = [1, 2];
+    expect(
+      await guildController.invite(
+        { user: { id: 1 } },
+        inviteMembersToGuildDto,
+      ),
+    ).toEqual(inviteMembersToGuildDto);
+  });
+
   it('should leave guild', async () => {
-    const result: any = {
-      id: 1,
-      name: 'string',
-    };
-    jest.spyOn(guildService, 'leave').mockImplementation(() => result);
-    const dto = new InviteMembersToGuildDto();
-    dto.members = [1, 2];
-    expect(
-      await guildController.leave(
-        {
-          user: {
-            id: 1,
-          },
-        },
-        '1',
-      ),
-    ).toBe(result);
+    expect(await guildController.leave({ user: { id: 1 } }, '1')).toEqual({});
   });
 
-  // delete guild
   it('should delete guild', async () => {
-    const result: any = {
-      id: 1,
-      name: 'string',
-    };
-    jest.spyOn(guildService, 'remove').mockImplementation(() => result);
-    const dto = new InviteMembersToGuildDto();
-    dto.members = [1, 2];
-    expect(
-      await guildController.remove(
-        {
-          user: {
-            id: 1,
-          },
-        },
-        '1',
-      ),
-    ).toBe(result);
+    expect(await guildController.remove({ user: { id: 1 } }, '1')).toEqual({});
   });
 });
