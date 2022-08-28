@@ -44,9 +44,11 @@ export class GuildService {
         relations: ['guildMembers'],
       },
     );
-    await this.usersRepository.findOneOrFail(req?.user?.id).catch(() => {
-      throw new Error('Error finding admin');
-    });
+    try {
+      await this.usersRepository.findOneOrFail(req?.user?.id);
+    } catch (e) {
+      throw new Error('You are not admin of this guild');
+    }
 
     // check if user is in guild
     const user: GuildMembers = guild?.guildMembers?.find(
