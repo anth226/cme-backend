@@ -91,14 +91,9 @@ describe('GuildService', () => {
   });
 
   it('should leave guild', async () => {
-    const res = await guildService
-      .leave(1, { user: { id: 1 } })
-      .then((res) => {
-        return res;
-      })
-      .catch((err) => {
-        return err;
-      });
+    const res = await guildService.leave(1, { user: { id: 1 } }).then((res) => {
+      return res;
+    });
   });
 
   it('should remove guild', async () => {

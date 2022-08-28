@@ -90,6 +90,8 @@ export class GuildService {
     } catch {
       throw new Error('You are not in this guild');
     }
+    console.log(guild, 'guuild');
+
     const user: GuildMembers = guild?.guildMembers?.find(
       (member) => member.user.id === req.user.id,
     );
