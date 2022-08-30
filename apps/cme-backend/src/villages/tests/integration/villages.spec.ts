@@ -14,16 +14,17 @@ describe('Villages integration', () => {
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
-        imports: [
-            ConfigModule,
-            TypeOrmModule.forRootAsync({
-                imports: [ConfigModule],
-                useFactory: (configService: ConfigService) => configService.get('typeorm'),
-                inject: [ConfigService],
-            }),
-            TypeOrmModule.forFeature([User]),
-            VillagesModule,
-        ],
+      imports: [
+        ConfigModule,
+        TypeOrmModule.forRootAsync({
+          imports: [ConfigModule],
+          useFactory: (configService: ConfigService) =>
+            configService.get('typeorm'),
+          inject: [ConfigService],
+        }),
+        TypeOrmModule.forFeature([User]),
+        VillagesModule,
+      ],
     }).compile();
 
     app = moduleFixture.createNestApplication();
@@ -41,22 +42,25 @@ describe('Villages integration', () => {
       .expect('Hello World!');
   });
 
-  it('should show user\'s village', async () => {
+  it("should show user's village", async () => {
     return request(app.getHttpServer())
       .get('/villages/1')
       .expect(200)
       .expect('Hello World!');
   });
 
-  it('should create user\'s first village', async () => {
+  it("should create user's first village", async () => {
     const response = await request(app.getHttpServer())
       .post('/villages')
       .send({
-          name: 'Chimpolis',
-          x: 0,
-          y: 0,
+        name: 'Chimpolis',
+        x: 0,
+        y: 0,
       })
-      .set('Authorization', 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InRvc2hzYW4iLCJzdWIiOjEsImlhdCI6MTYxODMzODk3MywiZXhwIjoxNjE4MzM5MDMzfQ.lu78vLqJ8Fs1EvilJuzDNCub66dVZODz0EWocYFAmiQ')
+      .set(
+        'Authorization',
+        'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InRvc2hzYW4iLCJzdWIiOjEsImlhdCI6MTYxODMzODk3MywiZXhwIjoxNjE4MzM5MDMzfQ.lu78vLqJ8Fs1EvilJuzDNCub66dVZODz0EWocYFAmiQ',
+      )
       .expect(201);
   });
 });
