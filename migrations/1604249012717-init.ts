@@ -3,14 +3,6 @@ import * as Promise from 'bluebird';
 
 export class init1604249012717 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
-    /* await queryRunner.createTable(new Table({
-            name: 'users',
-            columns: [
-                {
-
-                }
-            ]
-        })) */
     await Promise.mapSeries(
       [
         // TO DO: before releasing beta version, decide whether email should be required or optional
