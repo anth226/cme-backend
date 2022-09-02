@@ -14,6 +14,9 @@ import {
 } from './types';
 import { generateAttackReport } from './utils/attackReport';
 
+// TODO: when new units implemented, replace with unit.loadCapacity
+const GENERIC_LOAD_CAPACITY = 60;
+
 @Injectable()
 export class BattlesManagerService {
   private redisClient: Redis.Redis;
@@ -55,6 +58,7 @@ export class BattlesManagerService {
     attackId,
     attackerVillageId,
     defenderVillageId,
+    unitsInfoLeftByType,
   ) {
     const defenderResourcesInfo = await this.queryRunner.query(`
       SELECT
@@ -72,6 +76,16 @@ export class BattlesManagerService {
 
     const stolenResources = [];
 
+    let totalLoadCapacity = 0;
+
+    Object.keys(unitsInfoLeftByType)?.forEach((unitName) => {
+      totalLoadCapacity +=
+        unitsInfoLeftByType[unitName].count * GENERIC_LOAD_CAPACITY;
+    });
+
+    const averageLoot = Math.floor(totalLoadCapacity / 4); // TODO: update to 5 when stone implemented
+    const averageMKCLoot = Math.floor(averageLoot / 100);
+
     /**
      * stolenResources will look like:
      * [
@@ -84,12 +98,14 @@ export class BattlesManagerService {
       if (
         ['food', 'iron', 'wood', 'mkc'].indexOf(res.resourceTypeName) !== -1
       ) {
-        // Steal 5% of each resource.
-        const count = Math.round(Number(res.count) / 20);
+        // Avoid looting more resources than possible.
+        const logicalCount =
+          res.resourceTypeName === 'mkc' ? averageMKCLoot : averageLoot;
+        const finalCount = Math.min(logicalCount, res.count);
 
         stolenResources.push({
           id: res.resourceTypeId,
-          count,
+          count: finalCount,
         });
       }
     });
@@ -311,10 +327,19 @@ export class BattlesManagerService {
       defenderVillageId,
     } = parsed;
 
+    const unitsInfoLeftByType = { ...attackerUnitsInfoByType };
+    Object.values(attackerCasualties).forEach(
+      ({ unitTypeName, count: casualtiesCount }) => {
+        unitsInfoLeftByType[unitTypeName].count =
+          unitsInfoLeftByType[unitTypeName].count - casualtiesCount;
+      },
+    );
+
     this.updateAttackerStolenResourcesAfterReturnSql(
       attackId,
       attackerVillageId,
       defenderVillageId,
+      unitsInfoLeftByType,
     );
 
     this.updateAttackerValuesAfterReturnAsSql(
