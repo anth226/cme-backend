@@ -1,14 +1,19 @@
+import { Test } from '@nestjs/testing';
 import { mock } from 'jest-mock-extended';
 import { RolesBuilder } from 'nest-access-control';
-import { Test, TestingModule } from '@nestjs/testing';
+import { ExchangeMilitaryResourcesOwnVillagesDto } from './dto/exchange-resource-own.dto';
 import { VillagesController } from './villages.controller';
 import { VillagesService } from './villages.service';
 
-describe('VillagesController', () => {
-  let controller: VillagesController;
-
+describe('VillagesController test', () => {
+  let villagesController: VillagesController;
+  const mockVillagesService = {
+    sendMilitaryResourcesFromVillage: jest.fn((dto) => {
+      return dto;
+    }),
+  };
   beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
+    const module = await Test.createTestingModule({
       controllers: [VillagesController],
       providers: [
         {
@@ -18,14 +23,37 @@ describe('VillagesController', () => {
         {
           provide: '__roles_builder__',
           useValue: mock<RolesBuilder>(),
-        }
-      ]
-    }).compile();
+        },
+      ],
+    })
+      .overrideProvider(VillagesService)
+      .useValue(mockVillagesService)
+      .compile();
 
-    controller = module.get<VillagesController>(VillagesController);
+    villagesController = module.get<VillagesController>(VillagesController);
   });
 
   it('should be defined', () => {
-    expect(controller).toBeDefined();
+    expect(villagesController).toBeDefined();
+  });
+
+  it('should send military resources to anohter village of same user', async () => {
+    const exchangeMilitaryResourcesOwnVillagesDtoMock = new ExchangeMilitaryResourcesOwnVillagesDto();
+    exchangeMilitaryResourcesOwnVillagesDtoMock.receiverVillageId = 2;
+    exchangeMilitaryResourcesOwnVillagesDtoMock.resourcesSent = [
+      {
+        type: 'spearman',
+        count: 100,
+      },
+      {
+        type: 'pikeman',
+        count: 100,
+      },
+    ];
+    const result = villagesController.sendMilitaryResourcesFromVillage(
+      { user: { id: 1 } },
+      '1',
+      exchangeMilitaryResourcesOwnVillagesDtoMock,
+    );
   });
 });

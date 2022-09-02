@@ -2,13 +2,10 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Connection, Repository } from 'typeorm';
 import { isEmpty } from 'lodash';
-
-import { Village } from 'apps/cme-backend/src/villages/village.entity';
-import { VillageResourceType } from 'apps/cme-backend/src/villages-resource-types/village-resource-type.entity';
+import { Village } from '../../../cme-backend/src/villages/village.entity';
+import { VillageResourceType } from '../../../cme-backend/src/villages-resource-types/village-resource-type.entity';
 import { BASE_RESOURCES, MILITARY_RESOURCES } from '../rules';
-import { ResourceType } from 'apps/cme-backend/src/resource-types/resource-type.entity';
-// import { Industry } from '../../../cme-backend/src/industries/industry.entity';
-
+import { ResourceType } from '../../../cme-backend/src/resource-types/resource-type.entity';
 type SentResource = Readonly<{
   resourceTypeId: number;
   count: number;
@@ -86,7 +83,7 @@ export class ResourcesMsExchangesService {
   ): Array<VillageResourceType> {
     const villageResourcesLeftAfterExchange: Array<VillageResourceType> = [];
 
-    // if village dont have military resource existing then add it
+    // if village don't have sent-type military resources existing then add it
     if (!shouldRemove) {
       const vRType = village.villagesResourceTypes.map(
         (vrt) => vrt.resourceType.type,

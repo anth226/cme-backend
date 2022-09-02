@@ -34,7 +34,7 @@ import {
   ExchangeMilitaryResBetweenOwnVillageMsReq,
   ExchangeResBetweenOwnVillageMsReq,
   ResourcesMicroServiceMessages,
-} from 'apps/resources-ms/src/service-messages';
+} from '../../../resources-ms/src/service-messages';
 
 @ApiBearerAuth()
 @Controller('villages')
