@@ -6,6 +6,7 @@ import { ResourceInfo, ResourceUnitInfo, mergeRulesToList } from './rules';
 import {
   CreateFacilityMsReq,
   CreateOrderMsReq,
+  ExchangeMilitaryResBetweenOwnVillageMsReq,
   ExchangeResBetweenOwnVillageMsReq,
   FindFacilitiesForVillageMsReq,
   FindFacilityMsReq,
@@ -116,6 +117,22 @@ export class ResourcesMsController {
     req: ExchangeResBetweenOwnVillageMsReq,
   ): Promise<any> {
     return this.resourcesExchangesMsService.exchangeResourcesBetweenSameUserVillages(
+      req.senderVillageId,
+      req.receiverVillageId,
+      req.sentResources,
+      req.userId,
+    );
+  }
+
+  @MessagePattern({
+    cmd: ResourcesMicroServiceMessages.EXCHANGE_MILITARY_RESOURCES_OWN_VILLAGES,
+  })
+  async exchangeMilitaryResourcesBetweenOwnVillages(
+    req: ExchangeMilitaryResBetweenOwnVillageMsReq,
+  ): Promise<any> {
+    console.log('exchangeMilitaryResourcesBetweenOwnVillages microservice');
+
+    return this.resourcesExchangesMsService.exchangeMilitaryResourcesBetweenSameUserVillages(
       req.senderVillageId,
       req.receiverVillageId,
       req.sentResources,

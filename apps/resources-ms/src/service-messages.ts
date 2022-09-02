@@ -16,6 +16,7 @@ export const ResourcesMicroServiceMessages = {
   FORMAT_VILLAGE_RESOURCES: `${ResourcesMicroServiceName}_format_village_resources`,
   MERGE_UNIT_RULES: `${ResourcesMicroServiceName}_merge_unit_rules`,
   EXCHANGE_RESOURCES_OWN_VILLAGES: `${ResourcesMicroServiceName}_exchange_resources_own_villages`,
+  EXCHANGE_MILITARY_RESOURCES_OWN_VILLAGES: `${ResourcesMicroServiceName}_exchange_military_resources_own_villages`,
 };
 
 export type FindFacilityMsReq = Readonly<{
@@ -43,6 +44,16 @@ export type CreateOrderMsReq = CreateOrderDto;
 export type FormatVillageResourcesMsReq = Village;
 
 export type ExchangeResBetweenOwnVillageMsReq = Readonly<{
+  senderVillageId: number;
+  receiverVillageId: number;
+  sentResources: Array<{
+    type: string;
+    count: number;
+  }>;
+  userId: number;
+}>;
+
+export type ExchangeMilitaryResBetweenOwnVillageMsReq = Readonly<{
   senderVillageId: number;
   receiverVillageId: number;
   sentResources: Array<{
