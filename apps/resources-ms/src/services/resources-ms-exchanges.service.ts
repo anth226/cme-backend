@@ -460,7 +460,7 @@ export class ResourcesMsExchangesService {
         )
       ) {
         const speed = res.resourceType.characteristics.speed;
-        if (slowestSpeed < speed) {
+        if (slowestSpeed === 0 || speed < slowestSpeed) {
           slowestSpeed = speed;
         }
       }
