@@ -45,6 +45,8 @@ type SentResources = {
   [key: string]: SentResource;
 };
 
+type SentMilitaryResources = { id: number; count: number };
+
 const villageHasEnoughResources = (
   village: Village,
   resources: SentResources,
@@ -62,6 +64,31 @@ const villageHasEnoughResources = (
   return true;
 };
 
+const villageHasEnoughMilitaryResources = (
+  village: Village,
+  resources: SentMilitaryResources[],
+): boolean => {
+  // for (const key of Object.keys(resources)) {
+  //   const villageRes = village.villagesResourceTypes.find(
+  //     (vRes) => vRes.resourceType.type === key,
+  //   );
+
+  //   if (villageRes.count < resources[key].count) {
+  //     return false;
+  //   }
+  // }
+  resources.forEach((resource) => {
+    const villageRes = village.villagesResourceTypes.find(
+      (vRes) => vRes.resourceType.id === resource.id,
+    );
+
+    if (villageRes.count < resource.count) {
+      return false;
+    }
+  });
+
+  return true;
+};
 const EXCHANGEABLE_RESOURCES: ReadonlyArray<BASE_RESOURCES> = Object.values(
   BASE_RESOURCES,
 );
@@ -117,38 +144,17 @@ export class ResourcesMsExchangesService {
     return villageResourcesLeftAfterExchange;
   }
 
-  private addOrRemoveMiliteryResourcesToVillage(
+  private removeMiliteryResourcesToVillage(
     sentResourcesFormatted: any,
     village: Village,
     shouldRemove = true,
   ): Array<VillageResourceType> {
     const villageResourcesLeftAfterExchange: Array<VillageResourceType> = [];
-
-    // if village don't have sent-type military resources existing then add it
-    if (!shouldRemove) {
-      const vRType = village.villagesResourceTypes.map(
-        (vrt) => vrt.resourceType.type,
-      );
-      const vRTypeMilitary = Object.keys(sentResourcesFormatted).map((key) => {
-        return { [key]: sentResourcesFormatted[key] };
-      });
-      const newVRT = vRTypeMilitary.filter((item) => {
-        const keys = Object.keys(item);
-        return keys.some((key) => !vRType.includes(key));
-      });
-
-      newVRT.forEach((item) => {
-        const values = Object.values(item);
-        const villageResourceType = new VillageResourceType();
-        villageResourceType.resourceType = values[0].resourceTypeId;
-        villageResourceType.count = values[0].count;
-        villageResourceType.village = village;
-        villageResourcesLeftAfterExchange.push(villageResourceType);
-      });
-    }
     for (const villageResourceType of village.villagesResourceTypes) {
-      const resourceRequested =
-        sentResourcesFormatted[villageResourceType.resourceType.type];
+      const resourceRequested = sentResourcesFormatted.find(
+        (resource: { id: number }) =>
+          resource.id === villageResourceType.resourceType.id,
+      );
 
       if (!isEmpty(resourceRequested)) {
         const countLeftAfterExchange = shouldRemove
@@ -382,7 +388,7 @@ export class ResourcesMsExchangesService {
       );
     }
 
-    const sentResourcesFormatted: SentResources = {};
+    const sentResourcesFormatted: SentMilitaryResources[] = [];
     let hasForbiddenResources = false;
     const resourceTypes: ReadonlyArray<ResourceType> = await this.resourceTypesRepository.find();
 
@@ -407,10 +413,10 @@ export class ResourcesMsExchangesService {
         return;
       }
 
-      sentResourcesFormatted[res.type] = {
+      sentResourcesFormatted.push({
         count: res.count,
-        resourceTypeId: resType.id,
-      };
+        id: resType.id,
+      });
     }
 
     if (hasForbiddenResources) {
@@ -420,12 +426,14 @@ export class ResourcesMsExchangesService {
       );
     }
 
-    if (isEmpty(sentResourcesFormatted)) {
+    if (!sentResourcesFormatted.length) {
       return new HttpException('No resources to send', HttpStatus.BAD_REQUEST);
     }
 
     // Check if enough resources available in senderVillage
-    if (!villageHasEnoughResources(senderVillage, sentResourcesFormatted)) {
+    if (
+      !villageHasEnoughMilitaryResources(senderVillage, sentResourcesFormatted)
+    ) {
       return new HttpException(
         'Sender village has less resources than requested.',
         HttpStatus.BAD_REQUEST,
@@ -433,17 +441,10 @@ export class ResourcesMsExchangesService {
     }
 
     // Remove resources from senderVillage.
-    const senderVillageResourcesLeftAfterExchange = this.addOrRemoveMiliteryResourcesToVillage(
+    const senderVillageResourcesLeftAfterExchange = this.removeMiliteryResourcesToVillage(
       sentResourcesFormatted,
       senderVillage,
       true,
-    );
-
-    // Add resources on receiverVillage.
-    const receiverVillageResourcesTotalAfterExchange = this.addOrRemoveMiliteryResourcesToVillage(
-      sentResourcesFormatted,
-      receiverVillage,
-      false,
     );
 
     const distance = Math.sqrt(
@@ -451,15 +452,19 @@ export class ResourcesMsExchangesService {
         Math.pow(senderVillage.y - receiverVillage.y, 2),
     );
 
+    const resourceItemsToBeTransferred = await this.resourceTypesRepository.findByIds(
+      sentResourcesFormatted.map((res) => res.id),
+    );
+
     let slowestSpeed = 0;
     // find the slowest speed of the sent resources
-    receiverVillageResourcesTotalAfterExchange.forEach((res) => {
+    resourceItemsToBeTransferred.forEach((res) => {
       if (
         Object.values(MILITARY_RESOURCES).includes(
-          res.resourceType.type as MILITARY_RESOURCES,
+          res.type as MILITARY_RESOURCES,
         )
       ) {
-        const speed = res.resourceType.characteristics.speed;
+        const speed = res.characteristics.speed;
         if (slowestSpeed === 0 || speed < slowestSpeed) {
           slowestSpeed = speed;
         }
@@ -470,15 +475,15 @@ export class ResourcesMsExchangesService {
     await this.villagesResourceTypesRepository
       .save(senderVillageResourcesLeftAfterExchange)
       .then(() => {
-        // create redis task to update village resources
         this.redisClient.zadd(
           RECEIVER_VILLAGE_RESOURCES_QUEUE,
           Date.now() + travelTime,
-          JSON.stringify(receiverVillageResourcesTotalAfterExchange),
+          JSON.stringify({
+            resources: sentResourcesFormatted,
+            receiverVillageId: receiverVillage.id,
+            unique: Math.random(),
+          }),
         );
-      })
-      .catch((e) => {
-        return new HttpException(e, HttpStatus.INTERNAL_SERVER_ERROR);
       });
     return {};
   }
@@ -494,24 +499,33 @@ export class ResourcesMsExchangesService {
           '-inf',
           Date.now(),
         );
+        resourceToBeAdded.forEach(async (item) => {
+          const queueData = JSON.parse(item);
+          const villageResources = await this.villagesResourceTypesRepository.find(
+            {
+              where: {
+                village: queueData.receiverVillageId,
+              },
+            },
+          );
 
-        if (resourceToBeAdded.length) {
-          resourceToBeAdded.forEach(async (resource: any) => {
-            const receiverVillageResourcesTotalAfterExchange = JSON.parse(
-              resource,
-            );
+          const data: VillageResourceType[] = [];
+          queueData.resources.forEach(
+            (resource: { id: number; count: number }) => {
+              const resourceType = villageResources.find(
+                (villageResource) =>
+                  villageResource.resourceType.id === resource.id,
+              );
+              resourceType.count += resource.count;
+              data.push(resourceType);
+            },
+          );
 
-            await this.villagesResourceTypesRepository
-              .save(receiverVillageResourcesTotalAfterExchange)
-              .then(() => {
-                // remove the resource from the queue
-                this.redisClient.zrem(resourceType, resource);
-              })
-              .catch((e) => {
-                return new HttpException(e, HttpStatus.INTERNAL_SERVER_ERROR);
-              });
+          this.villagesResourceTypesRepository.save(data).then(() => {
+            // remove from redis after successfully added to village
+            this.redisClient.zremrangebyscore(resourceType, '-inf', Date.now());
           });
-        }
+        });
       },
     );
   }
