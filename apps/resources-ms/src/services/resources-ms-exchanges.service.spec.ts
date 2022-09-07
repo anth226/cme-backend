@@ -8,16 +8,9 @@ import { ResourceType } from '../../../cme-backend/src/resource-types/resource-t
 describe('ResourcesMsExchangesService', () => {
   let resourcesMsExchangesService: ResourcesMsExchangesService;
   const mockResourcesMsExchageRepository = {
-    create: jest.fn().mockImplementation((dto) => dto),
-    save: jest.fn().mockImplementation((guild) => Promise.resolve(guild)),
-    delete: jest.fn(),
-    remove: jest.fn(),
-    findByIds: jest.fn(
-      (ids: number[]) =>
-        new Promise((resolve) => {
-          resolve(ids);
-        }),
-    ),
+    exchangeMilitaryResourcesBetweenSameUserVillages: jest.fn((dto) => {
+      return dto;
+    }),
   };
 
   beforeEach(async () => {
@@ -37,7 +30,10 @@ describe('ResourcesMsExchangesService', () => {
           useValue: mockResourcesMsExchageRepository,
         },
       ],
-    }).compile();
+    })
+      .overrideProvider(ResourcesMsExchangesService)
+      .useValue(mockResourcesMsExchageRepository)
+      .compile();
 
     resourcesMsExchangesService = module.get<ResourcesMsExchangesService>(
       ResourcesMsExchangesService,
@@ -45,5 +41,22 @@ describe('ResourcesMsExchangesService', () => {
   });
   it('should be defined', () => {
     expect(resourcesMsExchangesService).toBeDefined();
+  });
+  it('should leave guild', async () => {
+    const res = await resourcesMsExchangesService.exchangeMilitaryResourcesBetweenSameUserVillages(
+      1,
+      2,
+      [
+        {
+          type: 'spearman',
+          count: 100,
+        },
+        {
+          type: 'pikeman',
+          count: 100,
+        },
+      ],
+      1,
+    );
   });
 });

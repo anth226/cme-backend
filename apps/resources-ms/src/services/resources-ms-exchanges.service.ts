@@ -1,15 +1,45 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Connection, Repository } from 'typeorm';
+import { Connection, QueryRunner, Repository } from 'typeorm';
 import { isEmpty } from 'lodash';
 import { Village } from '../../../cme-backend/src/villages/village.entity';
 import { VillageResourceType } from '../../../cme-backend/src/villages-resource-types/village-resource-type.entity';
 import { BASE_RESOURCES, MILITARY_RESOURCES } from '../rules';
 import { ResourceType } from '../../../cme-backend/src/resource-types/resource-type.entity';
+import { Cron, CronExpression } from '@nestjs/schedule';
+import * as Promise from 'bluebird';
+import * as Redis from 'ioredis';
+import { RedisService } from 'nestjs-redis';
+import { DevTravelTimeMode } from 'apps/cme-backend/src/attacks/dto/create-attack.dto';
+import { env } from 'process';
+
 type SentResource = Readonly<{
   resourceTypeId: number;
   count: number;
 }>;
+
+const computeTravelTime = (
+  distance: number,
+  slowestSpeed: number,
+  mode: DevTravelTimeMode = DevTravelTimeMode.DEFAULT,
+): number => {
+  const travelTimeAsHours = distance / slowestSpeed;
+
+  if (env.NODE_ENV === 'dev' && mode !== DevTravelTimeMode.DEFAULT) {
+    switch (mode) {
+      case DevTravelTimeMode.INSTANT:
+        return 0;
+      case DevTravelTimeMode.HOURS_AS_MINUTES:
+        return Math.round(travelTimeAsHours * 1000 * 60);
+      default:
+        break;
+    }
+  }
+
+  // When ready to have hours-long attacks moves, replace this by
+  // return Math.round(travelTimeAsHours * HOUR_AS_MS)
+  return Math.round(travelTimeAsHours * 1000 * 60);
+};
 
 type SentResources = {
   [key: string]: SentResource;
@@ -35,14 +65,19 @@ const villageHasEnoughResources = (
 const EXCHANGEABLE_RESOURCES: ReadonlyArray<BASE_RESOURCES> = Object.values(
   BASE_RESOURCES,
 );
+const RECEIVER_VILLAGE_RESOURCES_QUEUE = 'receiver-village-resources:queue';
 const EXCHANGEABLE_MILITARY_RESOURCES: ReadonlyArray<MILITARY_RESOURCES> = Object.values(
   MILITARY_RESOURCES,
 );
 
 @Injectable()
 export class ResourcesMsExchangesService {
+  private redisClient: Redis.Redis;
+  private queryRunner: QueryRunner;
+
   constructor(
     private connection: Connection,
+    private redisService: RedisService,
     @InjectRepository(Village)
     private villagesRepository: Repository<Village>,
     @InjectRepository(VillageResourceType)
@@ -50,6 +85,12 @@ export class ResourcesMsExchangesService {
     @InjectRepository(ResourceType)
     private resourceTypesRepository: Repository<ResourceType>, // @InjectRepository(Industry) // private industriesRepository: Repository<Industry>,
   ) {}
+
+  async onModuleInit() {
+    this.redisClient = await this.redisService.getClient();
+    this.queryRunner = this.connection.createQueryRunner();
+    await this.queryRunner.connect();
+  }
 
   private addOrRemoveResourcesToVillage(
     sentResourcesFormatted: any,
@@ -119,7 +160,6 @@ export class ResourcesMsExchangesService {
 
       villageResourcesLeftAfterExchange.push(villageResourceType);
     }
-
     return villageResourcesLeftAfterExchange;
   }
 
@@ -391,7 +431,6 @@ export class ResourcesMsExchangesService {
         HttpStatus.BAD_REQUEST,
       );
     }
-    // console.log(sentResourcesFormatted, 'sentResourcesFormatted');
 
     // Remove resources from senderVillage.
     const senderVillageResourcesLeftAfterExchange = this.addOrRemoveMiliteryResourcesToVillage(
@@ -407,25 +446,74 @@ export class ResourcesMsExchangesService {
       false,
     );
 
-    // Save the updated resourceTypes.
-    const queryRunner = this.connection.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
+    const distance = Math.sqrt(
+      Math.pow(senderVillage.x - receiverVillage.x, 2) +
+        Math.pow(senderVillage.y - receiverVillage.y, 2),
+    );
 
-    try {
-      await queryRunner.manager.save(senderVillageResourcesLeftAfterExchange);
-      await queryRunner.manager.save(
-        receiverVillageResourcesTotalAfterExchange,
-      );
-      await queryRunner.commitTransaction();
-    } catch (err) {
-      await queryRunner.rollbackTransaction();
-      throw err;
-    } finally {
-      await queryRunner.release();
-    }
+    let slowestSpeed = 0;
+    // find the slowest speed of the sent resources
+    receiverVillageResourcesTotalAfterExchange.forEach((res) => {
+      if (
+        Object.values(MILITARY_RESOURCES).includes(
+          res.resourceType.type as MILITARY_RESOURCES,
+        )
+      ) {
+        const speed = res.resourceType.characteristics.speed;
+        if (slowestSpeed < speed) {
+          slowestSpeed = speed;
+        }
+      }
+    });
+    const travelTime = computeTravelTime(distance, slowestSpeed);
 
+    await this.villagesResourceTypesRepository
+      .save(senderVillageResourcesLeftAfterExchange)
+      .then(() => {
+        // create redis task to update village resources
+        this.redisClient.zadd(
+          RECEIVER_VILLAGE_RESOURCES_QUEUE,
+          Date.now() + travelTime,
+          JSON.stringify(receiverVillageResourcesTotalAfterExchange),
+        );
+      })
+      .catch((e) => {
+        return new HttpException(e, HttpStatus.INTERNAL_SERVER_ERROR);
+      });
     return {};
+  }
+
+  @Cron(CronExpression.EVERY_SECOND)
+  async resourceTransferWithRedis() {
+    await Promise.mapSeries(
+      [RECEIVER_VILLAGE_RESOURCES_QUEUE],
+      async (resourceType: string) => {
+        // list of resources to be added to the village (executing time is less than or equal current time)
+        const resourceToBeAdded = await this.redisClient.zrangebyscore(
+          resourceType,
+          '-inf',
+          Date.now(),
+        );
+
+        if (resourceToBeAdded.length) {
+          resourceToBeAdded.forEach(async (resource: any) => {
+            const receiverVillageResourcesTotalAfterExchange = JSON.parse(
+              resource,
+            );
+
+            await this.villagesResourceTypesRepository
+              .save(receiverVillageResourcesTotalAfterExchange)
+              .then(() => {
+                // remove the resource from the queue
+                this.redisClient.zrem(resourceType, resource);
+              })
+              .catch((e) => {
+                return new HttpException(e, HttpStatus.INTERNAL_SERVER_ERROR);
+              });
+          });
+        }
+      },
+    );
   }
 
   // Same for units but with travel time.
