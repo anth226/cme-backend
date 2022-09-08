@@ -472,6 +472,7 @@ export class ResourcesMsExchangesService {
           JSON.stringify({
             resources: sentResourcesFormatted,
             receiverVillageId: receiverVillage.id,
+            senderVillageId: senderVillage.id,
             unique: Math.random(),
           }),
         );
@@ -524,10 +525,43 @@ export class ResourcesMsExchangesService {
             },
           );
 
-          this.villagesResourceTypesRepository.save(data).then(() => {
-            // remove from redis after successfully added to village
-            this.redisClient.zremrangebyscore(resourceType, '-inf', Date.now());
-          });
+          this.villagesResourceTypesRepository
+            .save(data)
+            .then(() => {
+              // remove from redis after successfully added to village
+              this.redisClient.zrem(resourceType, JSON.stringify(queueData));
+            })
+            .catch((err) => {
+              // revert resources to the sender villageResources if failed to add to receiver village
+              this.villagesResourceTypesRepository
+                .find({
+                  where: {
+                    village: queueData.senderVillageId,
+                  },
+                })
+                .then((senderVillageResources) => {
+                  const data: VillageResourceType[] = [];
+                  queueData.resources.forEach(
+                    (resource: { id: number; count: number }) => {
+                      const resourceType = senderVillageResources.find(
+                        (villageResource) =>
+                          villageResource.resourceType.id === resource.id,
+                      );
+                      if (!isEmpty(resourceType)) {
+                        resourceType.count += resource.count;
+                        data.push(resourceType);
+                      }
+                    },
+                  );
+                  this.villagesResourceTypesRepository.save(data).then(() => {
+                    // remove from redis after successfully added to village
+                    this.redisClient.zrem(
+                      resourceType,
+                      JSON.stringify(queueData),
+                    );
+                  });
+                });
+            });
         });
       },
     );
