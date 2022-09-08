@@ -4,7 +4,7 @@ import { Connection, QueryRunner, Repository } from 'typeorm';
 import { isEmpty } from 'lodash';
 import { Village } from '../../../cme-backend/src/villages/village.entity';
 import { VillageResourceType } from '../../../cme-backend/src/villages-resource-types/village-resource-type.entity';
-import { BASE_RESOURCES, MILITARY_RESOURCES } from '../rules';
+import { BASE_RESOURCES, MILITARY_RESOURCES, RESOURCES_QUEUE } from '../rules';
 import { ResourceType } from '../../../cme-backend/src/resource-types/resource-type.entity';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import * as Promise from 'bluebird';
@@ -18,26 +18,8 @@ type SentResource = Readonly<{
   count: number;
 }>;
 
-const computeTravelTime = (
-  distance: number,
-  slowestSpeed: number,
-  mode: DevTravelTimeMode = DevTravelTimeMode.DEFAULT,
-): number => {
+const computeTravelTime = (distance: number, slowestSpeed: number): number => {
   const travelTimeAsHours = distance / slowestSpeed;
-
-  if (env.NODE_ENV === 'dev' && mode !== DevTravelTimeMode.DEFAULT) {
-    switch (mode) {
-      case DevTravelTimeMode.INSTANT:
-        return 0;
-      case DevTravelTimeMode.HOURS_AS_MINUTES:
-        return Math.round(travelTimeAsHours * 1000 * 60);
-      default:
-        break;
-    }
-  }
-
-  // When ready to have hours-long attacks moves, replace this by
-  // return Math.round(travelTimeAsHours * HOUR_AS_MS)
   return Math.round(travelTimeAsHours * 1000 * 60);
 };
 
@@ -83,7 +65,6 @@ const villageHasEnoughMilitaryResources = (
 const EXCHANGEABLE_RESOURCES: ReadonlyArray<BASE_RESOURCES> = Object.values(
   BASE_RESOURCES,
 );
-const RECEIVER_VILLAGE_RESOURCES_QUEUE = 'receiver-village-resources:queue';
 const EXCHANGEABLE_MILITARY_RESOURCES: ReadonlyArray<MILITARY_RESOURCES> = Object.values(
   MILITARY_RESOURCES,
 );
@@ -467,7 +448,7 @@ export class ResourcesMsExchangesService {
       .save(senderVillageResourcesLeftAfterExchange)
       .then(() => {
         this.redisClient.zadd(
-          RECEIVER_VILLAGE_RESOURCES_QUEUE,
+          RESOURCES_QUEUE.RECEIVER_VILLAGE_RESOURCES_UPDATE,
           Date.now() + travelTime,
           JSON.stringify({
             resources: sentResourcesFormatted,
@@ -480,10 +461,10 @@ export class ResourcesMsExchangesService {
     return {};
   }
 
-  @Cron(CronExpression.EVERY_SECOND)
+  @Cron(CronExpression.EVERY_MINUTE)
   async resourceTransferWithRedis() {
     await Promise.mapSeries(
-      [RECEIVER_VILLAGE_RESOURCES_QUEUE],
+      [RESOURCES_QUEUE.RECEIVER_VILLAGE_RESOURCES_UPDATE],
       async (resourceType: string) => {
         // list of resources to be added to the village (executing time is less than or equal current time)
         const resourceToBeAdded = await this.redisClient.zrangebyscore(

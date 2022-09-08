@@ -16,6 +16,10 @@ export enum MILITARY_RESOURCES {
   PIKEMAN = 'pikeman',
 }
 
+export enum RESOURCES_QUEUE {
+  RECEIVER_VILLAGE_RESOURCES_UPDATE = 'receiver-village-resources:queue',
+}
+
 export const militaryResourceList: ReadonlyArray<MILITARY_RESOURCES> = [
   MILITARY_RESOURCES.CLUBMAN,
   MILITARY_RESOURCES.MACEMAN,
