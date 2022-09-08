@@ -28,6 +28,12 @@ type SentResources = {
 };
 
 type SentMilitaryResources = { id: number; count: number };
+type MilitaryResourceQueueType = {
+  receiverVillage: Village;
+  senderVillage: Village;
+  resources: SentMilitaryResources[];
+  unique: number;
+};
 
 const villageHasEnoughResources = (
   village: Village,
@@ -443,107 +449,114 @@ export class ResourcesMsExchangesService {
       }
     });
     const travelTime = computeTravelTime(distance, slowestSpeed);
-
+    const resourcesTransferQueue: MilitaryResourceQueueType = {
+      resources: sentResourcesFormatted,
+      receiverVillage: receiverVillage,
+      senderVillage: senderVillage,
+      unique: Math.random(),
+    };
     await this.villagesResourceTypesRepository
       .save(senderVillageResourcesLeftAfterExchange)
       .then(() => {
         this.redisClient.zadd(
           RESOURCES_QUEUE.RECEIVER_VILLAGE_RESOURCES_UPDATE,
           Date.now() + travelTime,
-          JSON.stringify({
-            resources: sentResourcesFormatted,
-            receiverVillageId: receiverVillage.id,
-            senderVillageId: senderVillage.id,
-            unique: Math.random(),
-          }),
+          JSON.stringify(resourcesTransferQueue),
         );
       });
     return {};
   }
 
-  @Cron(CronExpression.EVERY_MINUTE)
+  @Cron(CronExpression.EVERY_SECOND)
   async resourceTransferWithRedis() {
     await Promise.mapSeries(
       [RESOURCES_QUEUE.RECEIVER_VILLAGE_RESOURCES_UPDATE],
       async (resourceType: string) => {
-        // list of resources to be added to the village (executing time is less than or equal current time)
-        const resourceToBeAdded = await this.redisClient.zrangebyscore(
-          resourceType,
-          '-inf',
-          Date.now(),
-        );
-        resourceToBeAdded.forEach(async (item) => {
-          const queueData = JSON.parse(item);
-          const villageResources = await this.villagesResourceTypesRepository.find(
-            {
-              where: {
-                village: queueData.receiverVillageId,
-              },
-            },
-          );
-
-          const data: VillageResourceType[] = [];
-          queueData.resources.forEach(
-            (resource: { id: number; count: number }) => {
-              const resourceType = villageResources.find(
-                (villageResource) =>
-                  villageResource.resourceType.id === resource.id,
-              );
-              if (!isEmpty(resourceType)) {
-                resourceType.count += resource.count;
-                data.push(resourceType);
-              } else {
-                const newResourceType = new VillageResourceType();
-                const resType = new ResourceType();
-                const village = new Village();
-                village.id = queueData.receiverVillageId;
-                resType.id = resource.id;
-                newResourceType.resourceType = resType;
-                newResourceType.village = village;
-                newResourceType.count = resource.count;
-                data.push(newResourceType);
-              }
-            },
-          );
-
-          this.villagesResourceTypesRepository
-            .save(data)
-            .then(() => {
-              // remove from redis after successfully added to village
-              this.redisClient.zrem(resourceType, JSON.stringify(queueData));
-            })
-            .catch((err) => {
-              // revert resources to the sender villageResources if failed to add to receiver village
-              this.villagesResourceTypesRepository
-                .find({
+        switch (resourceType) {
+          case RESOURCES_QUEUE.RECEIVER_VILLAGE_RESOURCES_UPDATE:
+            // list of resources to be added to the village (executing time is less than or equal current time)
+            const resourceToBeAdded = await this.redisClient.zrangebyscore(
+              resourceType,
+              '-inf',
+              Date.now(),
+            );
+            resourceToBeAdded.forEach(async (item) => {
+              const queueData: MilitaryResourceQueueType = JSON.parse(item);
+              const villageResources = await this.villagesResourceTypesRepository.find(
+                {
                   where: {
-                    village: queueData.senderVillageId,
+                    village: queueData.receiverVillage,
                   },
-                })
-                .then((senderVillageResources) => {
-                  const data: VillageResourceType[] = [];
-                  queueData.resources.forEach(
-                    (resource: { id: number; count: number }) => {
-                      const resourceType = senderVillageResources.find(
-                        (villageResource) =>
-                          villageResource.resourceType.id === resource.id,
-                      );
-                      if (!isEmpty(resourceType)) {
-                        resourceType.count += resource.count;
-                        data.push(resourceType);
-                      }
-                    },
+                },
+              );
+
+              const data: VillageResourceType[] = [];
+              queueData.resources.forEach((resource: SentMilitaryResources) => {
+                const resourceType = villageResources.find(
+                  (villageResource) =>
+                    villageResource.resourceType.id === resource.id,
+                );
+                if (!isEmpty(resourceType)) {
+                  resourceType.count += resource.count;
+                  data.push(resourceType);
+                } else {
+                  const newResourceType = new VillageResourceType();
+                  const resType = new ResourceType();
+                  resType.id = resource.id;
+                  newResourceType.resourceType = resType;
+                  newResourceType.village = queueData.receiverVillage;
+                  newResourceType.count = resource.count;
+                  data.push(newResourceType);
+                }
+              });
+
+              this.villagesResourceTypesRepository
+                .save(data)
+                .then(() => {
+                  // remove from redis after successfully added to village
+                  this.redisClient.zrem(
+                    resourceType,
+                    JSON.stringify(queueData),
                   );
-                  this.villagesResourceTypesRepository.save(data).then(() => {
-                    // remove from redis after successfully added to village
-                    this.redisClient.zrem(
-                      resourceType,
-                      JSON.stringify(queueData),
-                    );
-                  });
+                })
+                .catch((err) => {
+                  // revert resources to the sender villageResources if failed to add to receiver village
+                  this.villagesResourceTypesRepository
+                    .find({
+                      where: {
+                        village: queueData.senderVillage,
+                      },
+                    })
+                    .then((senderVillageResources) => {
+                      const data: VillageResourceType[] = [];
+                      queueData.resources.forEach(
+                        (resource: { id: number; count: number }) => {
+                          const resourceType = senderVillageResources.find(
+                            (villageResource) =>
+                              villageResource.resourceType.id === resource.id,
+                          );
+                          if (!isEmpty(resourceType)) {
+                            resourceType.count += resource.count;
+                            data.push(resourceType);
+                          }
+                        },
+                      );
+                      this.villagesResourceTypesRepository
+                        .save(data)
+                        .then(() => {
+                          // remove from redis after successfully added to village
+                          this.redisClient.zrem(
+                            resourceType,
+                            JSON.stringify(queueData),
+                          );
+                        });
+                    });
                 });
             });
-        });
+            break;
+          default:
+            break;
+        }
       },
     );
   }

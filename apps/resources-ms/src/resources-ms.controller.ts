@@ -130,8 +130,6 @@ export class ResourcesMsController {
   async exchangeMilitaryResourcesBetweenOwnVillages(
     req: ExchangeMilitaryResBetweenOwnVillageMsReq,
   ): Promise<any> {
-    console.log('exchangeMilitaryResourcesBetweenOwnVillages microservice');
-
     return this.resourcesExchangesMsService.exchangeMilitaryResourcesBetweenSameUserVillages(
       req.senderVillageId,
       req.receiverVillageId,

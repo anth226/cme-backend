@@ -39,7 +39,7 @@ describe('ResourcesMsExchangesService', () => {
       ResourcesMsExchangesService,
     );
   });
-  it('should be defined', () => {
+  it('resources exchange', () => {
     expect(resourcesMsExchangesService).toBeDefined();
   });
   it('should leave guild', async () => {
