@@ -467,7 +467,7 @@ export class ResourcesMsExchangesService {
     return {};
   }
 
-  @Cron(CronExpression.EVERY_SECOND)
+  @Cron(CronExpression.EVERY_MINUTE)
   async resourceTransferWithRedis() {
     await Promise.mapSeries(
       [RESOURCES_QUEUE.RECEIVER_VILLAGE_RESOURCES_UPDATE],
