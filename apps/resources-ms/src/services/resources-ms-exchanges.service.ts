@@ -68,15 +68,6 @@ const villageHasEnoughMilitaryResources = (
   village: Village,
   resources: SentMilitaryResources[],
 ): boolean => {
-  // for (const key of Object.keys(resources)) {
-  //   const villageRes = village.villagesResourceTypes.find(
-  //     (vRes) => vRes.resourceType.type === key,
-  //   );
-
-  //   if (villageRes.count < resources[key].count) {
-  //     return false;
-  //   }
-  // }
   resources.forEach((resource) => {
     const villageRes = village.villagesResourceTypes.find(
       (vRes) => vRes.resourceType.id === resource.id,
@@ -516,8 +507,20 @@ export class ResourcesMsExchangesService {
                 (villageResource) =>
                   villageResource.resourceType.id === resource.id,
               );
-              resourceType.count += resource.count;
-              data.push(resourceType);
+              if (!isEmpty(resourceType)) {
+                resourceType.count += resource.count;
+                data.push(resourceType);
+              } else {
+                const newResourceType = new VillageResourceType();
+                const resType = new ResourceType();
+                const village = new Village();
+                village.id = queueData.receiverVillageId;
+                resType.id = resource.id;
+                newResourceType.resourceType = resType;
+                newResourceType.village = village;
+                newResourceType.count = resource.count;
+                data.push(newResourceType);
+              }
             },
           );
 
