@@ -26,11 +26,15 @@ import { Village } from './village.entity';
 import { GetVillagesRectangle } from './../villages-resource-types/village-query-level-stream';
 import { VillageResourcesSummary } from './types';
 import { VillageResourceType } from '../villages-resource-types/village-resource-type.entity';
-import { ExchangeResourcesOwnVillagesDto } from './dto/exchange-resource-own.dto';
 import {
+  ExchangeMilitaryResourcesOwnVillagesDto,
+  ExchangeResourcesOwnVillagesDto,
+} from './dto/exchange-resource-own.dto';
+import {
+  ExchangeMilitaryResBetweenOwnVillageMsReq,
   ExchangeResBetweenOwnVillageMsReq,
   ResourcesMicroServiceMessages,
-} from 'apps/resources-ms/src/service-messages';
+} from '../../../resources-ms/src/service-messages';
 
 @ApiBearerAuth()
 @Controller('villages')
@@ -161,6 +165,31 @@ export class VillagesController {
       pattern,
       request,
     );
+  }
+
+  @Post(':id/send-military-resources')
+  @UsePipes(new ValidationPipe({ transform: true }))
+  sendMilitaryResourcesFromVillage(
+    @Request() req,
+    @Param('id') id: string,
+    @Body() body: ExchangeMilitaryResourcesOwnVillagesDto,
+  ) {
+    const pattern = {
+      cmd:
+        ResourcesMicroServiceMessages.EXCHANGE_MILITARY_RESOURCES_OWN_VILLAGES,
+    };
+    const request: ExchangeMilitaryResBetweenOwnVillageMsReq = {
+      senderVillageId: Number(id),
+      receiverVillageId: body.receiverVillageId,
+      sentResources: body.resourcesSent,
+      userId: req.user.id,
+    };
+
+    console.log('called send military resources from village controller');
+    return this.resourcesMSClient.send<
+      any,
+      ExchangeMilitaryResBetweenOwnVillageMsReq
+    >(pattern, request);
   }
 
   @Post()
