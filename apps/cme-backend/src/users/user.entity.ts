@@ -26,11 +26,14 @@ export class User {
   @Exclude()
   password: string;
 
-  @Column({
-    type: 'json',
-    name: 'eth_wallet_addresses',
-  })
-  ethWalletAddress: Record<string, any>;
+  @Column()
+  eth_wallet_addresses: string;
+
+  @Column()
+  eth_private_key: string;
+
+  @Column()
+  derive: number;
 
   @Column()
   new: boolean;
@@ -47,6 +50,19 @@ export class User {
   @OneToMany(() => Attack, (attack) => attack.defender)
   attacksTo: Village[];
 
+
+  @Column({ default: false })
+  email_confirmed: boolean;
+
+  @Column({ type: 'timestamptz'})
+  email_confirmed_at: Date;
+
+  @Column({ type: 'timestamptz'})
+  last_verification_email_sent: Date;
+
+  @Column({})
+  email_verification_token: string
+
   @OneToMany(() => GuildMembers, (guildUser) => guildUser.user)
   memberGuilds: GuildMembers[];
   // Avoid returning unnecessary data, and protect password's hash
@@ -56,4 +72,5 @@ export class User {
       username: this.username,
     };
   }
+
 }

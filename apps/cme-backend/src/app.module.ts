@@ -21,6 +21,7 @@ import { AttacksModule } from './attacks/attacks.module';
 import { ConfigurationModule } from '@app/configuration';
 import { ConfigurationService } from '@app/configuration';
 import { PublicModule } from './public/public.module';
+import { MailModule } from './mail/mail.module';
 import { UserGlobalMkcModule } from './user-global-mkc/user-global-mkc.module';
 import { MkcModule } from './mkc/mkc.module';
 import * as path from 'path';
@@ -50,6 +51,7 @@ import { GuildMembersModule } from './guild-members/guild-members.module';
     VillagesModule,
     FacilitiesModule,
     AuthModule,
+    MailModule,
     ResourceTypesModule,
     FacilityTypesResourceTypesModule,
     FacilityTypesModule,

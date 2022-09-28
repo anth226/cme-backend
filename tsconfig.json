@@ -13,27 +13,15 @@
     "incremental": true,
     "resolveJsonModule": true,
     "paths": {
-      "src/*": [
-        "src/*"
-      ],
-      "@app/redlock": [
-        "libs/redlock/src"
-      ],
-      "@app/redlock/*": [
-        "libs/redlock/src/*"
-      ],
-      "@app/scheduler": [
-        "libs/scheduler/src"
-      ],
-      "@app/scheduler/*": [
-        "libs/scheduler/src/*"
-      ],
-      "@app/configuration": [
-        "libs/configuration/src"
-      ],
-      "@app/configuration/*": [
-        "libs/configuration/src/*"
-      ]
+      "src/*": ["src/*"],
+      "@app/redlock": ["libs/redlock/src"],
+      "@app/redlock/*": ["libs/redlock/src/*"],
+      "@app/scheduler": ["libs/scheduler/src"],
+      "@app/scheduler/*": ["libs/scheduler/src/*"],
+      "@app/configuration": ["libs/configuration/src"],
+      "@app/configuration/*": ["libs/configuration/src/*"],
+      "@app/blockchain/*": ["libs/blockchain/src/*"],
+      "@app/blockchain": ["libs/blockchain/src"]
     }
   }
 }

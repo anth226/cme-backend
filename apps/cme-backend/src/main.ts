@@ -18,7 +18,7 @@ async function bootstrap() {
     .setTitle('ME API')
     .setDescription('Monkey Empire API')
     .setVersion('1.0')
-    .addTag('cme')
+    .addTag('me')
     .addBearerAuth()
     .build();
   const document = SwaggerModule.createDocument(app, options);

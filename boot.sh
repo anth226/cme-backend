@@ -27,3 +27,6 @@ ENV=$1 docker-compose start db adminer redis
 
 ENV=$1 docker-compose up --build -d api ups uprod battles-manager resources-ms blockchain-ms
 
+sudo cp config/dev.yml apps/cme-backend/config/dev.yml
+sudo docker cp apps/cme-backend/config/dev.yml api:/home/node/app/dist/apps/cme-backend/config/
+

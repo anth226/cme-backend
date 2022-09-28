@@ -52,12 +52,12 @@
     "migrate": "yarn run typeorm migration:run"
   },
   "dependencies": {
-    "@nestjs/microservices": "7.6.15",
     "@nestjs-modules/mailer": "^1.6.1",
     "@nestjs/common": "7.6.15",
     "@nestjs/config": "0.6.3",
     "@nestjs/core": "7.6.15",
     "@nestjs/jwt": "7.2.0",
+    "@nestjs/microservices": "7.6.15",
     "@nestjs/passport": "7.1.5",
     "@nestjs/platform-express": "7.6.15",
     "@nestjs/platform-socket.io": "7.6.15",
@@ -70,6 +70,7 @@
     "class-transformer": "0.4.0",
     "class-validator": "0.13.1",
     "config": "^3.3.6",
+    "ethereum-hdwallet": "^0.1.2",
     "js-yaml": "4.0.0",
     "lodash": "^4.17.21",
     "nest-access-control": "2.0.2",
@@ -87,7 +88,8 @@
     "rxjs": "6.6.7",
     "socket.io-redis": "5.4.0",
     "swagger-ui-express": "4.1.6",
-    "typeorm": "0.2.32"
+    "typeorm": "0.2.32",
+    "web3": "^1.8.0"
   },
   "resolutions": {
     "@types/superagent": "4.1.13"
@@ -100,7 +102,7 @@
     "@types/jest": "26.0.22",
     "@types/js-yaml": "4.0.0",
     "@types/lodash": "^4.14.175",
-    "@types/node": "14.14.37",
+    "@types/node": "^14.18.10",
     "@types/socket.io": "2.1.13",
     "@types/supertest": "2.0.11",
     "@typescript-eslint/eslint-plugin": "3.9.1",
@@ -141,7 +143,9 @@
       "@app/scheduler/(.*)": "<rootDir>/libs/scheduler/src/$1",
       "@app/scheduler": "<rootDir>/libs/scheduler/src",
       "@app/configuration/(.*)": "<rootDir>/libs/configuration/src/$1",
-      "@app/configuration": "<rootDir>/libs/configuration/src"
+      "@app/configuration": "<rootDir>/libs/configuration/src",
+      "@app/blockchain": "<rootDir>/libs/blockchain/src",
+      "@app/blockchain/(.*)": "<rootDir>/libs/blockchain/src/$1"
     }
   }
 }

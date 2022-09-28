@@ -5,7 +5,7 @@ export enum AppRoles {
   Admin = 'admin',
 }
 
-const readOwnUserProps = ['email', 'username', 'ethWalletAddresses'];
+const readOwnUserProps = ['email', 'username', 'eth_wallet_addresses'];
 const readAnyVillageProps = [
   'id',
   'name',

@@ -18,4 +18,20 @@ export class UserRepository extends Repository<User> {
   async findOneByUsername(username: string): Promise<User> {
     return this.findOne({ username });
   }
+
+  async findOneByToken(email_verification_token: string): Promise<User> {
+    return this.findOne({ email_verification_token });
+  }
+
+  async updateUserEmailVerified(user: User): Promise<User> {
+    
+    user.email_confirmed_at = new Date();
+    user.email_confirmed = true;
+    this.save(user);
+
+    return user;
+
+  }
+
+
 }

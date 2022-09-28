@@ -9,6 +9,7 @@ import { jwtConstants } from './constants';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from '../users/user.entity';
 import { UserRepository } from '../users/user.repository';
+import { MailService } from '../mail/mail.service';
 
 @Module({
   imports: [
@@ -20,7 +21,7 @@ import { UserRepository } from '../users/user.repository';
       signOptions: { expiresIn: '60s' },
     }),
   ],
-  providers: [AuthService, LocalStrategy, JwtStrategy],
-  exports: [AuthService],
+  providers: [AuthService, MailService, LocalStrategy, JwtStrategy],
+  exports: [AuthService, MailService],
 })
 export class AuthModule {}

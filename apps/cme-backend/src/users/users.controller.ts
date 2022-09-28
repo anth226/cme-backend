@@ -14,7 +14,9 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { Public } from '../public.decorator';
 import { UserRepository } from './user.repository';
 import { InjectRepository } from '@nestjs/typeorm';
+import { BadRequestException } from '@nestjs/common';
 import { User } from './user.entity';
+import {validateEmail} from './../regex'
 
 @Controller('users')
 export class UsersController {
@@ -45,6 +47,13 @@ export class UsersController {
   @UsePipes(new ValidationPipe({ transform: true }))
   @UseInterceptors(ClassSerializerInterceptor)
   create(@Body() user: CreateUserDto) {
+
+    /*if(validateEmail(user.username)){
+      return this.usersService.create(user);
+    } else {
+      throw new BadRequestException('USERNAME_MUST_BE_A_VALID_EMAIL');
+    }*/
+    
     return this.usersService.create(user);
   }
 }

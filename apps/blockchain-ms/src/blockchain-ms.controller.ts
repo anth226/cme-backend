@@ -22,6 +22,14 @@ export class BlockchainMsController {
   }
 
   /**
+   * User's wallet address creation.
+   */
+  @MessagePattern({ cmd: BlockchainMicroServiceMessages.GET_BALANCE })
+  async getUserWallet(derive: number): Promise<any> {
+    return await this.ingameMKCService.getUserWallet(derive);
+  }
+
+  /**
    * MKC relay (blockchain connector).
    */
 }

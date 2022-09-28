@@ -21,3 +21,5 @@ typeorm:
   synchronize: false
   #logging: ["error", "warn", "query"]
   logging: ["error", "warn"]
+
+url: "http://localhost:3000"
