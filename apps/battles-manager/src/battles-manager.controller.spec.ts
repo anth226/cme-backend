@@ -11,7 +11,9 @@ describe('BattlesManagerController', () => {
       providers: [BattlesManagerService],
     }).compile();
 
-    battlesManagerController = app.get<BattlesManagerController>(BattlesManagerController);
+    battlesManagerController = app.get<BattlesManagerController>(
+      BattlesManagerController,
+    );
   });
 
   describe('root', () => {

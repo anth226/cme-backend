@@ -30,6 +30,8 @@ export const formatSimplerAttackEntity = (attack: Attack): PartialAttack => ({
   defenderVillage: {
     id: attack.defenderVillage.id,
     name: attack.defenderVillage.name,
+    x: attack.defenderVillage.x,
+    y: attack.defenderVillage.y,
   },
   attacker: {
     id: attack.attacker.id,
@@ -38,6 +40,8 @@ export const formatSimplerAttackEntity = (attack: Attack): PartialAttack => ({
   attackerVillage: {
     id: attack.attackerVillage.id,
     name: attack.attackerVillage.name,
+    x: attack.attackerVillage.x,
+    y: attack.attackerVillage.y,
   },
 });
 

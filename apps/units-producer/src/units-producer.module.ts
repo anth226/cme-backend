@@ -15,6 +15,7 @@ import { Facility } from 'apps/cme-backend/src/facilities/facility.entity';
   imports: [
     ConfigurationModule.register({
       projectRoot: path.resolve(__dirname, '..'),
+      configRoot: path.resolve(__dirname, '..', '..', '..', 'config'),
     }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigurationModule],

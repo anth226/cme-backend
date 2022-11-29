@@ -9,7 +9,6 @@ import { ConfigurationModule, ConfigurationService } from '@app/configuration';
 import { RedlockModule } from '@app/redlock';
 
 import { Facility } from 'apps/cme-backend/src/facilities/facility.entity';
-import { FacilityTypePrice } from 'apps/cme-backend/src/facility-types/facility-type-price.entity';
 import { VillageResourceType } from 'apps/cme-backend/src/villages-resource-types/village-resource-type.entity';
 import { EventsModule } from 'apps/cme-backend/src/events/events.module';
 
@@ -22,11 +21,16 @@ import { ResourcesMsExchangesService } from './services/resources-ms-exchanges.s
 import { Order } from 'apps/cme-backend/src/orders/orders.entity';
 import { Village } from 'apps/cme-backend/src/villages/village.entity';
 import { ResourceType } from 'apps/cme-backend/src/resource-types/resource-type.entity';
+import { FacilityType } from 'apps/cme-backend/src/facility-types/facility-type.entity';
+import { VillageStorageResourceType } from '../../cme-backend/src/villages-resource-types/village-storage-resource-type.entity';
+import { ResourcesStorageMsService } from './services/resources-ms-storage.service';
+import { ResourcesResourcesMsService } from './services/resources-ms-resources.service';
 
 @Module({
   imports: [
     ConfigurationModule.register({
       projectRoot: path.resolve(__dirname, '..'),
+      configRoot: path.resolve(__dirname, '..', '..', '..', 'config'),
     }),
     ScheduleModule.forRoot(),
     TypeOrmModule.forRootAsync({
@@ -44,9 +48,10 @@ import { ResourceType } from 'apps/cme-backend/src/resource-types/resource-type.
     EventsModule,
     RedlockModule,
     TypeOrmModule.forFeature([Facility]),
-    TypeOrmModule.forFeature([FacilityTypePrice]),
+    TypeOrmModule.forFeature([FacilityType]),
     TypeOrmModule.forFeature([Village]),
     TypeOrmModule.forFeature([VillageResourceType]),
+    TypeOrmModule.forFeature([VillageStorageResourceType]),
     TypeOrmModule.forFeature([Order]),
     TypeOrmModule.forFeature([ResourceType]),
   ],
@@ -57,6 +62,8 @@ import { ResourceType } from 'apps/cme-backend/src/resource-types/resource-type.
     ResourcesMsOrdersService,
     ResourcesMsService,
     ResourcesMsExchangesService,
+    ResourcesStorageMsService,
+    ResourcesResourcesMsService,
   ],
 })
 export class ResourcesMsModule {

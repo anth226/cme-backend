@@ -5,6 +5,9 @@ ormconfig.json
 package-lock.json
 yarn.lock
 
+# prod config
+config/prod.yml
+
 # Logs
 logs
 *.log

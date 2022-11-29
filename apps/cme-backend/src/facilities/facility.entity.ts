@@ -8,10 +8,19 @@ import {
   JoinColumn,
   Unique,
   OneToMany,
+  AfterLoad,
+  OneToOne,
 } from 'typeorm';
 import { Village } from '../villages/village.entity';
 import { FacilityType } from '../facility-types/facility-type.entity';
 import { Order } from '../orders/orders.entity';
+import {
+  ALL_FACILITIES,
+  computeBuildingCost,
+  FacilityTypeResPrice,
+} from '@app/game-rules';
+import { VillageStorageResourceType } from '../villages-resource-types/village-storage-resource-type.entity';
+import { isEmpty } from 'lodash';
 
 @Entity({ name: 'facilities' })
 @Unique(['village', 'location'])
@@ -53,14 +62,34 @@ export class Facility {
   })
   facilityType: FacilityType;
 
-  @ManyToOne(() => Village, (village) => village.facilities, {
-    eager: true,
-  })
+  @ManyToOne(() => Village, (village) => village.facilities)
   @JoinColumn({
     name: 'village_id',
   })
   village: Village;
 
   @OneToMany(() => Order, (order) => order.facility)
-  orders: Order[];
+  orders: Array<Order>;
+
+  nextUpgradeCost?: ReadonlyArray<FacilityTypeResPrice>;
+
+  @OneToOne(() => VillageStorageResourceType, (vsrt) => vsrt.facility, {
+    eager: true,
+  })
+  villageStorageResourceType?: VillageStorageResourceType;
+
+  @AfterLoad()
+  removeResourceTypeIfEmpty(): void {
+    if (isEmpty(this.villageStorageResourceType)) {
+      this.villageStorageResourceType = undefined;
+    }
+  }
+
+  @AfterLoad()
+  generateNextUpgradeCost(): void {
+    this.nextUpgradeCost = computeBuildingCost(
+      this.facilityType.type as ALL_FACILITIES,
+      this.level + 1,
+    );
+  }
 }

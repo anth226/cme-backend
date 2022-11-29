@@ -12,9 +12,9 @@ import {
   ValidationPipe,
 } from '@nestjs/common';
 import {
+  ClientProxy,
   ClientProxyFactory,
   Transport,
-  ClientProxy,
 } from '@nestjs/microservices';
 import { InjectRolesBuilder, RolesBuilder } from 'nest-access-control';
 import { isEmpty } from 'lodash';
@@ -23,7 +23,7 @@ import { VillagesService } from './villages.service';
 import { CreateVillageDto } from './dto/create-village.dto';
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { Village } from './village.entity';
-import { GetVillagesRectangle } from './../villages-resource-types/village-query-level-stream';
+import { GetVillagesRectangle } from '../villages-resource-types/village-query-level-stream';
 import { VillageResourcesSummary } from './types';
 import { VillageResourceType } from '../villages-resource-types/village-resource-type.entity';
 import {
@@ -34,7 +34,11 @@ import {
   ExchangeMilitaryResBetweenOwnVillageMsReq,
   ExchangeResBetweenOwnVillageMsReq,
   ResourcesMicroServiceMessages,
+  TransferToVaultStorageMsReq,
 } from '../../../resources-ms/src/service-messages';
+import { VillageDataDto } from './dto/village-data.dto';
+import { isMilitaryResource, resToResTypeInfo } from '@app/game-rules';
+import { TransferResourcesToStorage } from './dto/transfer-storage-vault.dto';
 
 @ApiBearerAuth()
 @Controller('villages')
@@ -59,7 +63,7 @@ export class VillagesController {
   async index(
     @Request() req,
     @Query() queryParams: GetVillagesRectangle,
-  ): Promise<Village[]> {
+  ): Promise<Array<Village>> {
     const permission = this.rolesBuilder.can(req.user.roles).readAny('village');
 
     if (queryParams.x1 && queryParams.y1 && queryParams.x2 && queryParams.y2) {
@@ -91,11 +95,16 @@ export class VillagesController {
   }
 
   @Get(':id')
-  async show(@Request() req, @Param('id') id: string) {
+  async show(@Request() req, @Param('id') id: string): Promise<VillageDataDto> {
     const village = await this.villagesService.findOne(id);
+    if (isEmpty(village)) {
+      throw new HttpException('Village not found', HttpStatus.NOT_FOUND);
+    }
+
     if (village.user.id !== req.user.id) {
       throw new HttpException('Access forbidden', HttpStatus.FORBIDDEN);
     }
+
     const permission = this.rolesBuilder.can(req.user.roles).readOwn('village');
     return permission.filter(village);
   }
@@ -121,18 +130,9 @@ export class VillagesController {
         id: res.resourceType.id,
       };
 
-      if (!isEmpty(res.resourceType.characteristics)) {
-        fighters.push({
-          ...baseInfo,
-          health: res.resourceType.characteristics['health'],
-          range: res.resourceType.characteristics['range'],
-          damage: res.resourceType.characteristics['damage'],
-          defense: res.resourceType.characteristics['defense'],
-          pierce_defense: res.resourceType.characteristics['pierce_defense'],
-          speed: res.resourceType.characteristics['speed'],
-          food_upkeep: res.resourceType.characteristics['food_upkeep'],
-          production_time: res.resourceType.characteristics['production_time'],
-        });
+      const resInfo = resToResTypeInfo(res.resourceType, res.count);
+      if (isMilitaryResource(resInfo)) {
+        fighters.push(baseInfo);
       } else {
         others.push(baseInfo);
       }
@@ -162,6 +162,28 @@ export class VillagesController {
     };
 
     return this.resourcesMSClient.send<any, ExchangeResBetweenOwnVillageMsReq>(
+      pattern,
+      request,
+    );
+  }
+
+  @Post(':id/transfer-to-storage')
+  @UsePipes(new ValidationPipe({ transform: true }))
+  transferResourcesToStorageFromVillage(
+    @Param('id') id: string,
+    @Body() body: TransferResourcesToStorage,
+  ) {
+    const pattern = {
+      cmd: ResourcesMicroServiceMessages.TRANSFER_RESOURCE_TO_VAULT_STORAGE,
+    };
+    const request: TransferToVaultStorageMsReq = {
+      villageId: Number(id),
+      facilityId: body.facilityId,
+      transferType: body.transferType,
+      resource: body.resource,
+    };
+
+    return this.resourcesMSClient.send<any, TransferToVaultStorageMsReq>(
       pattern,
       request,
     );

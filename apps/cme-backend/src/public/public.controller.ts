@@ -1,4 +1,12 @@
-import { Controller, Get, HttpException, HttpStatus, Param, Query, Request } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  HttpException,
+  HttpStatus,
+  Param,
+  Query,
+  Request,
+} from '@nestjs/common';
 
 import { IsInt, IsString } from 'class-validator';
 import { Public } from '../public.decorator';
@@ -10,7 +18,7 @@ export class GetLeaders {
   limit: number;
 
   @IsString()
-  leaderBoardType : LeaderBoardType;
+  leaderBoardType: LeaderBoardType;
 }
 
 @Controller('public')
@@ -20,18 +28,39 @@ export class PublicController {
   @Public()
   @Get('leaders')
   async leaders(@Request() req, @Query() queryParams: GetLeaders) {
-    return await this.publicService.getGenericLeaderRequest("economicLeaders" , queryParams.limit, "economicLeaders", "none");
+    return await this.publicService.getGenericLeaderRequest(
+      'economicLeaders',
+      queryParams.limit,
+      'economicLeaders',
+      'none',
+    );
   }
 
   @Public()
   @Get('leaders/generic/:leaderBoardType/:period')
-  async generic(@Request() req, @Query() queryParams: GetLeaders, @Param('leaderBoardType') leaderBoardType: string, @Param('period') period: string) {
-    if(leaderBoardType in LEADERS_QUERIES) {
-      return await this.publicService.getGenericLeaderRequest(leaderBoardType, queryParams.limit, LEADERS_QUERIES[leaderBoardType], period);
+  async generic(
+    @Request() req,
+    @Query() queryParams: GetLeaders,
+    @Param('leaderBoardType') leaderBoardType: string,
+    @Param('period') period: string,
+  ) {
+    if (leaderBoardType in LEADERS_QUERIES) {
+      return await this.publicService.getGenericLeaderRequest(
+        leaderBoardType,
+        queryParams.limit,
+        LEADERS_QUERIES[leaderBoardType],
+        period,
+      );
     }
-    throw new HttpException(`BAD Request ${leaderBoardType} not valid`, HttpStatus.BAD_REQUEST);
-    
+    throw new HttpException(
+      `BAD Request ${leaderBoardType} not valid`,
+      HttpStatus.BAD_REQUEST,
+    );
   }
 
-
+  @Public()
+  @Get('rules')
+  async rules() {
+    return this.publicService.getRules();
+  }
 }

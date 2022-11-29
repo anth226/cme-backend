@@ -1,13 +1,13 @@
 #!/bin/bash
 
 #Dev by default
-if [ -z "${1}" ]; then 
-    ENV='dev'
-else 
-    ENV=${1}
+if [ -z "$1" ]; then
+    ENV_VAL='dev'
+else
+    ENV_VAL=$1
 fi
 
-echo "Booting $ENV environment"
+echo "Booting $ENV_VAL environment"
 
 if [ "$(uname)" == "Darwin" ]; then
     # For macos users
@@ -23,10 +23,10 @@ else
     fi
 fi
 
-ENV=$1 docker-compose start db adminer redis 
+ENV=$ENV_VAL docker-compose up -d db adminer redis
 
-ENV=$1 docker-compose up --build -d api ups uprod battles-manager resources-ms blockchain-ms
+ENV=$ENV_VAL docker-compose up --build -d api ups uprod battles-manager resources-ms blockchain-ms
 
-sudo cp config/dev.yml apps/cme-backend/config/dev.yml
-sudo docker cp apps/cme-backend/config/dev.yml api:/home/node/app/dist/apps/cme-backend/config/
+# sudo cp config/dev.yml apps/cme-backend/config/dev.yml
+# sudo docker cp apps/cme-backend/config/dev.yml api:/home/node/app/dist/apps/cme-backend/config/
 

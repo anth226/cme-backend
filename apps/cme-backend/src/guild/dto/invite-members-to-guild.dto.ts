@@ -4,5 +4,5 @@ export class InviteMembersToGuildDto {
   id: number;
 
   @ApiProperty()
-  members: number[];
+  members: Array<number>;
 }

@@ -1,0 +1,119 @@
+# Use postgres/example user/password credentials
+version: '3.1'
+
+services:
+  api:
+    container_name: api
+    build:
+      context: ./apps/cme-backend
+    environment:
+      NODE_ENV: ${ENV}
+    ports:
+      - 3000:3000
+    volumes:
+      - ./:/home/node/app
+      # - ../cme-backend:/home/node/app/cme-backend
+      # - ../libs:/home/node/app/libs
+      # - ../../migrations:/home/node/app/migrations
+      # - ../../package.json:/home/node/app
+      # - ../../yarn.lock:/home/node/app
+      # - ../../tsconfig.build.json:/home/node/app
+      # - ../../tsconfig.json:/home/node/app
+      # - ../../nest-cli.json:/home/node/app
+
+  ups:
+    container_name: ups
+    build:
+      context: ./apps/units-production-scheduler
+    environment:
+      NODE_ENV: ${ENV}
+    ports:
+      - 3001:3001
+    volumes:
+      - ./:/home/node/app
+      # - ../units-production-scheduler:/home/node/app/units-production-scheduler
+      # - ../libs:/home/node/app/units-production-scheduler/libs
+      # - ../../package.json:/home/node/app
+      # - ../../yarn.lock:/home/node/app
+      # - ../../tsconfig.build.json:/home/node/app
+      # - ../../tsconfig.json:/home/node/app
+      # - ../../nest-cli.json:/home/node/app
+
+  uprod:
+    container_name: uprod
+    build:
+      context: ./apps/units-producer
+    environment:
+      NODE_ENV: ${ENV}
+    ports:
+      - 3002:3002
+    volumes:
+      - ./:/home/node/app
+
+  battles-manager:
+    container_name: bm
+    build:
+      context: ./apps/battles-manager
+    environment:
+      NODE_ENV: ${ENV}
+    ports:
+      - 3003:3003
+    volumes:
+      - ./:/home/node/app
+
+  resources-ms:
+    container_name: resources-ms
+    build:
+      context: ./apps/resources-ms
+    environment:
+      NODE_ENV: ${ENV}
+    ports:
+      - 3004:3004
+    volumes:
+      - ./:/home/node/app
+
+  blockchain-ms:
+    container_name: blockchain-ms
+    build:
+      context: ./apps/blockchain-ms
+    environment:
+      NODE_ENV: ${ENV}
+    ports:
+      - 3005:3005
+    volumes:
+      - ./:/home/node/app
+
+  db:
+    container_name: pg
+    image: postgres:13.2
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: example
+      NODE_ENV: ${ENV}
+    ports:
+      - 5433:5432
+    working_dir: /home
+    volumes:
+      - ./db/snapshots:/docker-entrypoint-initdb.d
+      - ./db/bin:/home/bin
+
+  adminer:
+    container_name: adminer
+    environment:
+      NODE_ENV: ${ENV}
+    image: adminer
+    restart: always
+    ports:
+      - 8081:8080
+
+  redis:
+    container_name: redis
+    image: redis:6.2-buster
+    command: redis-server --requirepass 96104305cdf1e02badc378cef3f60f23319d1600a6de13f71f120e476061dba3
+    restart: always
+    environment:
+      NODE_ENV: ${ENV}
+    sysctls:
+      net.core.somaxconn: 511
+    ports:
+      - 6379:6379

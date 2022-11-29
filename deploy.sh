@@ -1,30 +1,36 @@
 #Should be executed as sudo and be downloaded apart
 
 #Dev by default
-if [ -z "${1}" ]; then 
-    ENV='dev'
+if [ -z "$1" ]; then 
+    ENV_VAL='prod'
 else 
-    ENV=${1}
+    ENV_VAL=$1
 fi
 
-echo "Deploying APP in $ENV environment"
+echo "Deploying APP in $ENV_VAL environment"
 
+echo "Copying prod conf"
+mkdir -p /home/gitlab-ci/temp
+cp /home/gitlab-ci/cme-backend/config/prod.yml /home/gitlab-ci/temp/
 
 echo "Deleting previous repo"
 rm -r /home/gitlab-ci/cme-backend
 echo "Cloning Repo"
-mkdir /home/gitlab-ci
 cd /home/gitlab-ci
 git clone https://gitlab+deploy-token-635521:PSUbjHSvT4s9DYBkS4Pm@gitlab.com/samy.f/cme-backend.git
 chown -R admin:admin cme-backend
 cd cme-backend
 
-#echo "Pulling Repo"
-#git pull https://gitlab+deploy-token-635521:PSUbjHSvT4s9DYBkS4Pm@gitlab.com/samy.f/cme-backend.git
+echo "Recopying prod conf"
+cp /home/gitlab-ci/temp/prod.yml /home/gitlab-ci/cme-backend/config/
 
 echo "Making executables"
 chmod u+x /home/gitlab-ci/cme-backend/init.sh
 chmod u+x /home/gitlab-ci/cme-backend/boot.sh
+
+
+echo "Stopping everything"
+docker-compose stop
 
 echo "Deleting previous api"
 docker container rm api
@@ -45,7 +51,7 @@ echo "Deleting previous blockchain-ms"
 docker container rm blockchain-ms
 
 echo "Building dockers"
-./init.sh $ENV
+./init.sh $ENV_VAL
 
 echo "Booting dockers"
-./boot.sh $ENV
+./boot.sh $ENV_VAL

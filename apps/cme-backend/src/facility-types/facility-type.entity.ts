@@ -1,21 +1,20 @@
 import { Industry } from '../industries/industry.entity';
 import {
-    Entity,
-    Column,
-    PrimaryGeneratedColumn,
-    CreateDateColumn,
-    UpdateDateColumn,
-    Unique,
-    OneToOne,
-    OneToMany,
-    ManyToOne,
-    JoinColumn,
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  CreateDateColumn,
+  UpdateDateColumn,
+  Unique,
+  OneToOne,
+  OneToMany,
+  ManyToOne,
+  JoinColumn,
 } from 'typeorm';
-import { Facility} from "../facilities/facility.entity";
+import { Facility } from '../facilities/facility.entity';
 import { FacilityTypeResourceType } from '../facility-types-resource-types/facility_type_resource_type.entity';
-import { FacilityTypePrice } from '../facility-types/facility-type-price.entity';
 
-@Entity({name: 'facility_types'})
+@Entity({ name: 'facility_types' })
 @Unique(['type'])
 export class FacilityType {
   @PrimaryGeneratedColumn()
@@ -25,7 +24,7 @@ export class FacilityType {
   type: string;
 
   @Column('json')
-  parameters: Record<string,any>;
+  parameters: Record<string, any>;
 
   /* @CreateDateColumn({
     name: 'created_at'
@@ -37,7 +36,7 @@ export class FacilityType {
   })
   updatedAt: Date; */
 
-  @ManyToOne(() => Industry, industry => industry.facilityTypes, {
+  @ManyToOne(() => Industry, (industry) => industry.facilityTypes, {
     eager: true,
   })
   @JoinColumn({
@@ -45,14 +44,12 @@ export class FacilityType {
   })
   industry: Industry;
 
-  @OneToMany(() => Facility, facility => facility.facilityType)
-  facilities: Facility[];
+  @OneToMany(() => Facility, (facility) => facility.facilityType)
+  facilities: Array<Facility>;
 
-  @OneToMany(() => FacilityTypeResourceType, facilityTypeResourceType => facilityTypeResourceType.resourceType)
-  facilityTypesResourceTypes: FacilityTypeResourceType [];
-
-  @OneToMany(() => FacilityTypePrice, facilityTypePrice => facilityTypePrice.facilityType, {
-    eager: true,
-  })
-  facilityTypePrices: FacilityTypePrice[];
+  @OneToMany(
+    () => FacilityTypeResourceType,
+    (facilityTypeResourceType) => facilityTypeResourceType.resourceType,
+  )
+  facilityTypesResourceTypes: Array<FacilityTypeResourceType>;
 }

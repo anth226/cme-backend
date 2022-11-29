@@ -1,17 +1,17 @@
 import {
-    Entity,
-    Column,
-    PrimaryGeneratedColumn,
-    CreateDateColumn,
-    UpdateDateColumn,
-    ManyToOne,
-    JoinColumn,
-    Unique,
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  CreateDateColumn,
+  UpdateDateColumn,
+  ManyToOne,
+  JoinColumn,
+  Unique,
 } from 'typeorm';
 import { Facility } from '../facilities/facility.entity';
 import { ResourceType } from '../resource-types/resource-type.entity';
 
-@Entity({name: 'orders'})
+@Entity({ name: 'orders' })
 export class Order {
   @PrimaryGeneratedColumn()
   id: number;
@@ -36,7 +36,7 @@ export class Order {
   })
   updatedAt: Date;
 
-  @ManyToOne(() => Facility, facility => facility.orders, {
+  @ManyToOne(() => Facility, (facility) => facility.orders, {
     eager: true,
   })
   @JoinColumn({
@@ -44,7 +44,7 @@ export class Order {
   })
   facility: Facility;
 
-  @ManyToOne(() => ResourceType, resourceType => resourceType.orders, {
+  @ManyToOne(() => ResourceType, (resourceType) => resourceType.orders, {
     eager: true,
   })
   @JoinColumn({

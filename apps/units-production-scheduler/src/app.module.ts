@@ -11,10 +11,14 @@ import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
-    ConfigurationModule.register({projectRoot: path.resolve(__dirname, '..')}),
+    ConfigurationModule.register({
+      projectRoot: path.resolve(__dirname, '..'),
+      configRoot: path.resolve(__dirname, '..', '..', '..', 'config'),
+    }),
     RedisModule.forRootAsync({
       imports: [ConfigurationModule],
-      useFactory: (configurationService: ConfigurationService) => configurationService.get('db.redis'),
+      useFactory: (configurationService: ConfigurationService) =>
+        configurationService.get('db.redis'),
       inject: [ConfigurationService],
     }),
     ScheduleModule.forRoot(),

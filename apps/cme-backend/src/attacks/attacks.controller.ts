@@ -31,7 +31,7 @@ export class AttacksController {
   // Needs to be declared before /:id to avoid conflict.
   @Get('summary')
   summary(@Request() req): Promise<UserAttackssummaryDto> {
-    return this.attacksService.userAttackssummary(req);
+    return this.attacksService.userAttackssummary(req.user);
   }
 
   @Get(':id')

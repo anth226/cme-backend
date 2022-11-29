@@ -1,18 +1,27 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Connection, QueryRunner, Repository } from 'typeorm';
 import { isEmpty } from 'lodash';
 import { Village } from '../../../cme-backend/src/villages/village.entity';
 import { VillageResourceType } from '../../../cme-backend/src/villages-resource-types/village-resource-type.entity';
-import { BASE_RESOURCES, MILITARY_RESOURCES, RESOURCES_QUEUE } from '../rules';
+import {
+  BASE_RESOURCES,
+  MILITARY_RESOURCES,
+  RESOURCES_QUEUE,
+} from '@app/game-rules';
 import { ResourceType } from '../../../cme-backend/src/resource-types/resource-type.entity';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import * as Promise from 'bluebird';
 import * as Redis from 'ioredis';
 import { RedisService } from 'nestjs-redis';
-import { DevTravelTimeMode } from 'apps/cme-backend/src/attacks/dto/create-attack.dto';
-import { env } from 'process';
+import { VillageStorageResourceType } from '../../../cme-backend/src/villages-resource-types/village-storage-resource-type.entity';
+import {
+  MilitaryResourceQueueType,
+  ResourcesResourcesMsService,
+  SentMilitaryResources,
+} from './resources-ms-resources.service';
 
+// TODO/ FACTORISE
 type SentResource = Readonly<{
   resourceTypeId: number;
   count: number;
@@ -23,51 +32,11 @@ const computeTravelTime = (distance: number, slowestSpeed: number): number => {
   return Math.round(travelTimeAsHours * 1000 * 60);
 };
 
+// TODO/ FACTORISE
 type SentResources = {
   [key: string]: SentResource;
 };
 
-type SentMilitaryResources = { id: number; count: number };
-type MilitaryResourceQueueType = {
-  receiverVillage: Village;
-  senderVillage: Village;
-  resources: SentMilitaryResources[];
-  unique: number;
-};
-
-const villageHasEnoughResources = (
-  village: Village,
-  resources: SentResources,
-): boolean => {
-  for (const key of Object.keys(resources)) {
-    const villageRes = village.villagesResourceTypes.find(
-      (vRes) => vRes.resourceType.type === key,
-    );
-
-    if (villageRes.count < resources[key].count) {
-      return false;
-    }
-  }
-
-  return true;
-};
-
-const villageHasEnoughMilitaryResources = (
-  village: Village,
-  resources: SentMilitaryResources[],
-): boolean => {
-  resources.forEach((resource) => {
-    const villageRes = village.villagesResourceTypes.find(
-      (vRes) => vRes.resourceType.id === resource.id,
-    );
-
-    if (villageRes.count < resource.count) {
-      return false;
-    }
-  });
-
-  return true;
-};
 const EXCHANGEABLE_RESOURCES: ReadonlyArray<BASE_RESOURCES> = Object.values(
   BASE_RESOURCES,
 );
@@ -79,14 +48,18 @@ const EXCHANGEABLE_MILITARY_RESOURCES: ReadonlyArray<MILITARY_RESOURCES> = Objec
 export class ResourcesMsExchangesService {
   private redisClient: Redis.Redis;
   private queryRunner: QueryRunner;
+  private logger: Logger = new Logger('ResourcesMsFacilitiesService');
 
   constructor(
     private connection: Connection,
     private redisService: RedisService,
+    private resourceMsResourceService: ResourcesResourcesMsService,
     @InjectRepository(Village)
     private villagesRepository: Repository<Village>,
     @InjectRepository(VillageResourceType)
     private villagesResourceTypesRepository: Repository<VillageResourceType>,
+    @InjectRepository(VillageStorageResourceType)
+    private villagesStorageResourceTypesRepository: Repository<VillageStorageResourceType>,
     @InjectRepository(ResourceType)
     private resourceTypesRepository: Repository<ResourceType>, // @InjectRepository(Industry) // private industriesRepository: Repository<Industry>,
   ) {}
@@ -97,7 +70,7 @@ export class ResourcesMsExchangesService {
     await this.queryRunner.connect();
   }
 
-  private addOrRemoveResourcesToVillage(
+  public addOrRemoveResourcesToVillage(
     sentResourcesFormatted: any,
     village: Village,
     shouldRemove = true,
@@ -151,6 +124,7 @@ export class ResourcesMsExchangesService {
    *
    * @param senderVillage
    * @param receiverVillage
+   * @param sentResources
    * @returns Promise<any>
    */
   private async exchangeResourcesBetweenVillages(
@@ -218,7 +192,12 @@ export class ResourcesMsExchangesService {
     }
 
     // Check if enough resources available in senderVillage
-    if (!villageHasEnoughResources(senderVillage, sentResourcesFormatted)) {
+    if (
+      !this.resourceMsResourceService.villageHasEnoughResources(
+        senderVillage,
+        sentResourcesFormatted,
+      )
+    ) {
       return new HttpException(
         'Sender village has less resources than requested.',
         HttpStatus.BAD_REQUEST,
@@ -366,7 +345,7 @@ export class ResourcesMsExchangesService {
       );
     }
 
-    const sentResourcesFormatted: SentMilitaryResources[] = [];
+    const sentResourcesFormatted: Array<SentMilitaryResources> = [];
     let hasForbiddenResources = false;
     const resourceTypes: ReadonlyArray<ResourceType> = await this.resourceTypesRepository.find();
 
@@ -410,7 +389,10 @@ export class ResourcesMsExchangesService {
 
     // Check if enough resources available in senderVillage
     if (
-      !villageHasEnoughMilitaryResources(senderVillage, sentResourcesFormatted)
+      !this.resourceMsResourceService.villageHasEnoughMilitaryResources(
+        senderVillage,
+        sentResourcesFormatted,
+      )
     ) {
       return new HttpException(
         'Sender village has less resources than requested.',
@@ -490,7 +472,7 @@ export class ResourcesMsExchangesService {
                 },
               );
 
-              const data: VillageResourceType[] = [];
+              const data: Array<VillageResourceType> = [];
               queueData.resources.forEach((resource: SentMilitaryResources) => {
                 const resourceType = villageResources.find(
                   (villageResource) =>
@@ -528,7 +510,7 @@ export class ResourcesMsExchangesService {
                       },
                     })
                     .then((senderVillageResources) => {
-                      const data: VillageResourceType[] = [];
+                      const data: Array<VillageResourceType> = [];
                       queueData.resources.forEach(
                         (resource: { id: number; count: number }) => {
                           const resourceType = senderVillageResources.find(

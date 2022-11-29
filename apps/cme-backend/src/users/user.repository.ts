@@ -10,8 +10,7 @@ export class UserRepository extends Repository<User> {
   //   console.log(this);
   // }
 
-
-  async findAll(): Promise<User[]> {
+  async findAll(): Promise<Array<User>> {
     return await this.find();
   }
 
@@ -24,14 +23,10 @@ export class UserRepository extends Repository<User> {
   }
 
   async updateUserEmailVerified(user: User): Promise<User> {
-    
     user.email_confirmed_at = new Date();
     user.email_confirmed = true;
     this.save(user);
 
     return user;
-
   }
-
-
 }

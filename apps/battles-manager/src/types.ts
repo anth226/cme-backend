@@ -1,20 +1,19 @@
-export type casualtiesInfo = {
+export type CasualtiesInfo = {
   unitTypeId: number;
   unitTypeName: string;
   count: number;
 };
 
-export type casualtiesInfoByUnitTypeId = {
-  [key: string]: casualtiesInfo;
+export type CasualtiesInfoByUnitTypeId = {
+  [key: string]: CasualtiesInfo;
 };
-
-export type attackCasualties = {
+export type AttackCasualties = {
   [key: string]: {
-    casualtiesInfoByUnitTypeId: casualtiesInfoByUnitTypeId;
+    casualtiesInfoByUnitTypeId: CasualtiesInfoByUnitTypeId;
   };
 };
 
-export type unitCharacteristics = {
+export type UnitCharacteristics = {
   health: number;
   range: number;
   damage: number;
@@ -26,18 +25,18 @@ export type unitCharacteristics = {
 };
 
 // replace this unitInfo + characteristics with the resources-ms one when migrating the battle manager to new ms
-export type unitInfo = {
+export type UnitInfo = {
   unitTypeId: number;
   unitTypeName: string;
-  characteristics?: unitCharacteristics;
+  characteristics?: UnitCharacteristics;
   count?: number;
 };
 
-export type unitInfoByType = {
-  [key: string]: unitInfo;
+export type UnitInfoByType = {
+  [key: string]: UnitInfo;
 };
 
-export type attackReport = {
+export type AttackReport = {
   attackId: number;
   travelTime: number;
   attackerVillageId: number;
@@ -45,9 +44,23 @@ export type attackReport = {
   winnerVillageId: number;
   loserVillageId;
   unitsInfoByType: {
-    [key: string]: unitInfoByType;
+    [key: string]: UnitInfoByType;
   };
-  casualties: attackCasualties;
+  casualties: AttackCasualties;
+};
+
+export type StolenResource = {
+  id: number;
+  count: number;
+};
+
+export type RedisReturningAttackData = {
+  attackId: number;
+  attackerUnitsInfoByType: UnitInfoByType;
+  attackerCasualties: CasualtiesInfoByUnitTypeId;
+  attackerVillageId: number;
+  defenderVillageId: number;
+  stolenResources: Array<StolenResource> | undefined;
 };
 
 export enum StakeholderStatus {

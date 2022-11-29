@@ -33,7 +33,7 @@ export class User {
   eth_private_key: string;
 
   @Column()
-  derive: number;
+  derivation_id: string;
 
   @Column()
   new: boolean;
@@ -42,29 +42,28 @@ export class User {
   role: string;
 
   @OneToMany(() => Village, (village) => village.user)
-  villages: Village[];
+  villages: Array<Village>;
 
   @OneToMany(() => Attack, (attack) => attack.attacker)
-  attacksFrom: Village[];
+  attacksFrom: Array<Village>;
 
   @OneToMany(() => Attack, (attack) => attack.defender)
-  attacksTo: Village[];
-
+  attacksTo: Array<Village>;
 
   @Column({ default: false })
   email_confirmed: boolean;
 
-  @Column({ type: 'timestamptz'})
+  @Column({ type: 'timestamptz' })
   email_confirmed_at: Date;
 
-  @Column({ type: 'timestamptz'})
+  @Column({ type: 'timestamptz' })
   last_verification_email_sent: Date;
 
   @Column({})
-  email_verification_token: string
+  email_verification_token: string;
 
   @OneToMany(() => GuildMembers, (guildUser) => guildUser.user)
-  memberGuilds: GuildMembers[];
+  memberGuilds: Array<GuildMembers>;
   // Avoid returning unnecessary data, and protect password's hash
   toJSON() {
     return {
@@ -72,5 +71,4 @@ export class User {
       username: this.username,
     };
   }
-
 }

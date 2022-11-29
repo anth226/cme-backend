@@ -3,7 +3,16 @@
   "sourceRoot": "apps/cme-backend/src",
   "compilerOptions": {
     "webpack": false,
-    "tsConfigPath": "apps/cme-backend/tsconfig.app.json"
+    "tsConfigPath": "apps/cme-backend/tsconfig.app.json",
+    "plugins": [
+      {
+        "name": "@nestjs/swagger",
+        "options": {
+          "classValidatorShim": false,
+          "introspectComments": true
+        }
+      }
+    ]
   },
   "monorepo": true,
   "root": "apps/cme-backend",
@@ -14,14 +23,7 @@
       "entryFile": "main",
       "sourceRoot": "apps/cme-backend/src",
       "compilerOptions": {
-        "tsConfigPath": "apps/cme-backend/tsconfig.app.json",
-        "assets": [
-          {
-            "include": "../config/*.yml",
-            "watchAssets": true,
-            "outDir": "dist/apps/cme-backend/config"
-          }
-        ]
+        "tsConfigPath": "apps/cme-backend/tsconfig.app.json"
       }
     },
     "units-production-scheduler": {
@@ -30,14 +32,7 @@
       "entryFile": "main",
       "sourceRoot": "apps/units-production-scheduler/src",
       "compilerOptions": {
-        "tsConfigPath": "apps/units-production-scheduler/tsconfig.app.json",
-        "assets": [
-          {
-            "include": "../config/*.yml",
-            "watchAssets": true,
-            "outDir": "dist/apps/units-production-scheduler/config"
-          }
-        ]
+        "tsConfigPath": "apps/units-production-scheduler/tsconfig.app.json"
       }
     },
     "units-producer": {
@@ -46,14 +41,7 @@
       "entryFile": "main",
       "sourceRoot": "apps/units-producer/src",
       "compilerOptions": {
-        "tsConfigPath": "apps/units-producer/tsconfig.app.json",
-        "assets": [
-          {
-            "include": "../config/*.yml",
-            "watchAssets": true,
-            "outDir": "dist/apps/units-producer/config"
-          }
-        ]
+        "tsConfigPath": "apps/units-producer/tsconfig.app.json"
       }
     },
     "redlock": {
@@ -98,14 +86,7 @@
       "entryFile": "main",
       "sourceRoot": "apps/battles-manager/src",
       "compilerOptions": {
-        "tsConfigPath": "apps/battles-manager/tsconfig.app.json",
-        "assets": [
-          {
-            "include": "../config/*.yml",
-            "watchAssets": true,
-            "outDir": "dist/apps/battles-manager/config"
-          }
-        ]
+        "tsConfigPath": "apps/battles-manager/tsconfig.app.json"
       }
     },
     "resources-ms": {
@@ -114,14 +95,7 @@
       "entryFile": "main",
       "sourceRoot": "apps/resources-ms/src",
       "compilerOptions": {
-        "tsConfigPath": "apps/resources-ms/tsconfig.app.json",
-        "assets": [
-          {
-            "include": "../config/*.yml",
-            "watchAssets": true,
-            "outDir": "dist/apps/resources-ms/config"
-          }
-        ]
+        "tsConfigPath": "apps/resources-ms/tsconfig.app.json"
       }
     },
     "blockchain-ms": {
@@ -130,14 +104,25 @@
       "entryFile": "main",
       "sourceRoot": "apps/blockchain-ms/src",
       "compilerOptions": {
-        "tsConfigPath": "apps/blockchain-ms/tsconfig.app.json",
-        "assets": [
-          {
-            "include": "../config/*.yml",
-            "watchAssets": true,
-            "outDir": "dist/apps/blockchain-ms/config"
-          }
-        ]
+        "tsConfigPath": "apps/blockchain-ms/tsconfig.app.json"
+      }
+    },
+    "game-rules": {
+      "type": "library",
+      "root": "libs/game-rules",
+      "entryFile": "index",
+      "sourceRoot": "libs/game-rules/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/game-rules/tsconfig.lib.json"
+      }
+    },
+    "errors": {
+      "type": "library",
+      "root": "libs/errors",
+      "entryFile": "index",
+      "sourceRoot": "libs/errors/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/errors/tsconfig.lib.json"
       }
     }
   }

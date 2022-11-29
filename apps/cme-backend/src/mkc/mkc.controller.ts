@@ -1,4 +1,4 @@
-import { Controller, Get, Request } from '@nestjs/common';
+import { Body, Controller, Get, Post, Request } from '@nestjs/common';
 import { ApiBearerAuth } from '@nestjs/swagger';
 import {
   ClientProxyFactory,
@@ -9,15 +9,17 @@ import {
 import {
   GetBalanceMsReq,
   BlockchainMicroServiceMessages,
+  TransferExternalWalletMsReq,
 } from 'apps/blockchain-ms/src/service-messages';
+import { WithdrawDto } from './dto/withdraw.dto';
 
 @ApiBearerAuth()
 @Controller('mkc')
 export class MKCController {
-  private resourcesMSClient: ClientProxy;
+  private blockchainMSClient: ClientProxy;
 
   constructor() {
-    this.resourcesMSClient = ClientProxyFactory.create({
+    this.blockchainMSClient = ClientProxyFactory.create({
       transport: Transport.TCP,
       options: {
         host: 'blockchain-ms',
@@ -29,12 +31,29 @@ export class MKCController {
   @Get('wallet')
   wallet(@Request() req) {
     const pattern = {
-      cmd: BlockchainMicroServiceMessages.GET_BALANCE,
+      cmd: BlockchainMicroServiceMessages.INGAME_GET_BALANCE,
     };
     const request: GetBalanceMsReq = {
       userId: req.user.id,
     };
 
-    return this.resourcesMSClient.send<any, GetBalanceMsReq>(pattern, request);
+    return this.blockchainMSClient.send<any, GetBalanceMsReq>(pattern, request);
+  }
+
+  @Post('withdraw')
+  withdraw(@Request() req, @Body() body: WithdrawDto) {
+    const pattern = {
+      cmd: BlockchainMicroServiceMessages.CRYPTO_TRANSFER_EXTERNAL,
+    };
+    const request: TransferExternalWalletMsReq = {
+      userId: req.user.id,
+      address: body.address,
+      amount: body.amount,
+    };
+
+    return this.blockchainMSClient.send<any, TransferExternalWalletMsReq>(
+      pattern,
+      request,
+    );
   }
 }

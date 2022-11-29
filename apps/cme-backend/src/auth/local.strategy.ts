@@ -3,7 +3,7 @@ import { PassportStrategy } from '@nestjs/passport';
 import { BadRequestException } from '@nestjs/common';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import {validateEmail} from './../regex'
+import { validateEmail } from './../regex';
 
 @Injectable()
 export class LocalStrategy extends PassportStrategy(Strategy) {
@@ -26,5 +26,7 @@ export class LocalStrategy extends PassportStrategy(Strategy) {
     if (!user) {
       throw new UnauthorizedException();
     }
+
+    return user;
   }
 }

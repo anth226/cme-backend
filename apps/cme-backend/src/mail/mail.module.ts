@@ -8,8 +8,8 @@ import { join } from 'path';
   imports: [
     MailerModule.forRoot({
       transport: {
-        host: "smtp.gmail.com",
-        port: "465",
+        host: 'smtp.gmail.com',
+        port: '465',
         secure: true,
         auth: {
           user: 'support@monkeyempire.net',
@@ -18,7 +18,7 @@ import { join } from 'path';
       },
       defaults: {
         from: '"Monkey Empire" <noreply@monkeyempire.net>',
-        replyTo : "support@monkeyempire.net"
+        replyTo: 'support@monkeyempire.net',
       },
       template: {
         dir: join(__dirname, 'templates'),

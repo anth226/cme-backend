@@ -12,15 +12,20 @@ import { BattlesManagerService } from './battles-manager.service';
 
 @Module({
   imports: [
-    ConfigurationModule.register({projectRoot: path.resolve(__dirname, '..')}),
+    ConfigurationModule.register({
+      projectRoot: path.resolve(__dirname, '..'),
+      configRoot: path.resolve(__dirname, '..', '..', '..', 'config'),
+    }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigurationModule],
-      useFactory: (configurationService: ConfigurationService) => configurationService.get('typeorm'),
+      useFactory: (configurationService: ConfigurationService) =>
+        configurationService.get('typeorm'),
       inject: [ConfigurationService],
     }),
     RedisModule.forRootAsync({
       imports: [ConfigurationModule],
-      useFactory: (configurationService: ConfigurationService) => configurationService.get('db.redis'),
+      useFactory: (configurationService: ConfigurationService) =>
+        configurationService.get('db.redis'),
       inject: [ConfigurationService],
     }),
     ScheduleModule.forRoot(),

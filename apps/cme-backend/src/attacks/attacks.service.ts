@@ -1,4 +1,4 @@
-import { Injectable, Request, HttpException, HttpStatus } from '@nestjs/common';
+import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { RedisService } from 'nestjs-redis';
@@ -9,14 +9,13 @@ import { Village } from '../villages/village.entity';
 import { Attack } from './attack.entity';
 import { VillageResourceType } from '../villages-resource-types/village-resource-type.entity';
 import {
-  formatSimplerAttackEntity,
   formatSimplerAttackList,
   UserAttackssummaryDto,
 } from './userSummary.util';
-import { isEmpty } from 'lodash';
 import { env } from 'process';
-
-// const HOUR_AS_MS = 60 * 60 * 1000;
+import { getRelatedCharacteristic, MILITARY_RESOURCES } from '@app/game-rules';
+import { isEmpty } from 'lodash';
+import { TRUCE_DURATION, TRUCE_ELIGIBILITY_PERIOD } from '@app/game-rules';
 
 const computeAttackTime = (
   distance: number,
@@ -64,9 +63,23 @@ export class AttacksService {
       createAttackDto.defenderVillageId,
     );
 
+    if (isEmpty(defenderVillage.user)) {
+      throw new HttpException(
+        'A user cannot attack a ghost village',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
     if (attackerVillage.user.id === defenderVillage.user.id) {
       throw new HttpException(
         'A user cannot attack themselve',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    if (defenderVillage.inTrucePeriod) {
+      throw new HttpException(
+        "Can't attack a village under truce protection",
         HttpStatus.BAD_REQUEST,
       );
     }
@@ -92,6 +105,9 @@ export class AttacksService {
         (villageResourceType) =>
           villageResourceType.resourceType.id === resourceRequested.unitTypeId,
       );
+      const characteristics = getRelatedCharacteristic(
+        resourceName as MILITARY_RESOURCES,
+      );
 
       if (
         !resourceAvailable ||
@@ -103,11 +119,8 @@ export class AttacksService {
         );
       }
 
-      if (
-        slowestSpeed === 0 ||
-        slowestSpeed < resourceAvailable.resourceType.characteristics.speed
-      ) {
-        slowestSpeed = resourceAvailable.resourceType.characteristics.speed;
+      if (slowestSpeed === 0 || slowestSpeed < characteristics.speed) {
+        slowestSpeed = characteristics.speed;
       }
     });
 
@@ -176,6 +189,23 @@ export class AttacksService {
         console.log(e);
       });
 
+    // Attacker loses truce shield (if he has one)
+    if (attackerVillage.inTrucePeriod) {
+      await this.villagesRepository.update(attackerVillage.id, {
+        truceEndsAt: new Date(),
+      });
+    }
+
+    // Defender gains truce shield
+    if (
+      defenderVillage.createdAt.getTime() + TRUCE_ELIGIBILITY_PERIOD >
+      Date.now()
+    ) {
+      await this.villagesRepository.update(defenderVillage.id, {
+        truceEndsAt: new Date(Date.now() + TRUCE_DURATION),
+      });
+    }
+
     // Save the new attack.
     return this.attacksRepository.save(attack);
   }
@@ -190,9 +220,9 @@ export class AttacksService {
    * !WARNING!: this logic is a very basic and not very optimized version, it will need a good update,
    * with a specific Postgres request.
    */
-  async userAttackssummary(@Request() req): Promise<UserAttackssummaryDto> {
-    const userRequesting: User = req.user;
-
+  async userAttackssummary(
+    userRequesting: User,
+  ): Promise<UserAttackssummaryDto> {
     // made
     const lastFiveAttacksMade: ReadonlyArray<Attack> = await this.attacksRepository.find(
       {

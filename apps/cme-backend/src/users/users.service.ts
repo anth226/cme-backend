@@ -1,54 +1,79 @@
 import * as bcrypt from 'bcrypt';
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UserRepository } from './user.repository';
 import { MailService } from '../mail/mail.service';
 
-const HDWallet = require('ethereum-hdwallet');
-//please enter new mnemonic and place it only on server (use dummy mnemonic for local development)
-const hdwallet = HDWallet.fromMnemonic(
-  'tag volcano eight thank tide danger coast health above argue embrace heavy',
-);
+import {
+  ClientProxy,
+  ClientProxyFactory,
+  Transport,
+} from '@nestjs/microservices';
+
+import {
+  BlockchainMicroServiceMessages,
+  CreateWalletMsReq,
+  CreateWalletMsResp,
+} from 'apps/blockchain-ms/src/service-messages';
+import { isEmpty } from 'lodash';
+import { processName } from '../naming/naming';
 
 @Injectable()
 export class UsersService {
+  private blockchainMSClient: ClientProxy;
+
   constructor(
-    @InjectRepository(UserRepository) private readonly usersRepository: UserRepository,
+    @InjectRepository(UserRepository)
+    private readonly usersRepository: UserRepository,
     private mailService: MailService,
   ) {
-    //
+    this.blockchainMSClient = ClientProxyFactory.create({
+      transport: Transport.TCP,
+      options: {
+        host: 'blockchain-ms',
+        port: 3005,
+      },
+    });
   }
 
-  async create(user: CreateUserDto): Promise<User> {
-    const mywallet = hdwallet.derive(`m/44'/60'/0'/0`);
-    const getAllUsers: any = await this.usersRepository.findAll();
-    console.log('getAllUsers', getAllUsers);
-    let derive: any = 1;
-    if (getAllUsers.length !== 0) {
-      derive = Math.max(...getAllUsers.map((o) => o.derive));
-      derive = ++derive;
+  async create(dto: CreateUserDto): Promise<User> {
+    dto.username = processName(dto.username);
+
+    const existingUser = await this.usersRepository.findOneByUsername(
+      dto.username,
+    );
+
+    if (!isEmpty(existingUser)) {
+      throw new HttpException('Username already used.', HttpStatus.BAD_REQUEST);
     }
 
-    user.password = await bcrypt.hash(user.password, 10);
-    user.eth_wallet_addresses = `0x${mywallet
-      .derive(derive)
-      .getAddress()
-      .toString('hex')}`;
+    const user = new User();
 
-    user.eth_private_key = `${mywallet
-      .derive(derive)
-      .getPrivateKey()
-      .toString('hex')}`;
-    user.derive = Number(derive);
-    user.email_verification_token = await bcrypt.hash(user.username+user.password, 10);
-    user.password = await bcrypt.hash(user.password, 10);
-    //user.email = user.username
+    user.username = dto.username;
+    user.password = await bcrypt.hash(dto.password, 10);
+    user.email_verification_token = await bcrypt.hash(
+      dto.username + dto.password,
+      10,
+    );
+
+    const createdUser = await this.usersRepository.save(user);
+
+    const request: CreateWalletMsReq = {
+      userId: createdUser.id,
+    };
+
+    // Creates the wallet asynchronously to avoid blocking the request.
+    this.blockchainMSClient.emit<number, CreateWalletMsReq>(
+      BlockchainMicroServiceMessages.CRYPTO_CREATE_WALLET,
+      request,
+    );
 
     //sending verification email
     this.mailService.sendVerificationEmail(user);
-    return this.usersRepository.save(user);
+
+    return Promise.resolve(createdUser);
   }
 
   async get(username: string) {

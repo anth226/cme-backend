@@ -1,161 +1,161 @@
 {
-    "barrack": {
-        "clubman": {
-            "characteristics": {
-                "health": 100,
-                "range": 1,
-                "damage": 8,
-                "defense": 4,
-                "pierce_defense": 2,
-                "speed": 10,
-                "food_upkeep": 1,
-                "production_time": 10
-            },
-            "costs": {
-                "iron": 1,
-                "wood": 10,
-                "food": 10
-            }
-        },
-        "maceman": {
-            "characteristics": {
-                "health": 120,
-                "range": 1,
-                "damage": 12,
-                "defense": 5,
-                "pierce_defense": 2,
-                "speed": 10,
-                "food_upkeep": 1,
-                "production_time": 12
-            },
-            "costs": {
-                "iron": 10,
-                "wood": 5,
-                "food": 15
-            }
-        },
-        "short_sword": {
-            "characteristics": {
-                "health": 140,
-                "range": 1,
-                "damage": 14,
-                "defense": 5,
-                "pierce_defense": 4,
-                "speed": 10,
-                "food_upkeep": 1,
-                "production_time": 14
-            },
-            "costs": {
-                "iron": 15,
-                "wood": 10,
-                "food": 15
-            }
-        },
-        "long_sword": {
-            "characteristics": {
-                "health": 150,
-                "range": 1,
-                "damage": 16,
-                "defense": 7,
-                "pierce_defense": 6,
-                "speed": 10,
-                "food_upkeep": 2,
-                "production_time": 16
-            },
-            "costs": {
-                "iron": 20,
-                "wood": 10,
-                "food": 18
-            }
-        }
+  "barrack": {
+    "clubman": {
+      "characteristics": {
+        "health": 100,
+        "range": 1,
+        "damage": 8,
+        "defense": 4,
+        "pierce_defense": 2,
+        "speed": 10,
+        "food_upkeep": 1,
+        "production_time": 10
+      },
+      "costs": {
+        "iron": 1,
+        "wood": 10,
+        "food": 10
+      }
     },
-    "shooting_range": {
-        "rock_thrower": {
-            "characteristics": {
-                "health": 40,
-                "range": 3,
-                "damage": 6,
-                "defense": 2,
-                "pierce_defense": 2,
-                "speed": 12,
-                "food_upkeep": 1,
-                "production_time": 12
-            },
-            "costs": {
-                "iron": 2,
-                "wood": 10,
-                "food": 5
-            }
-        },
-        "slinger": {
-            "characteristics": {
-                "health": 100,
-                "range": 1,
-                "damage": 8,
-                "defense": 4,
-                "pierce_defense": 2,
-                "speed": 10,
-                "food_upkeep": 1,
-                "production_time": 10
-            },
-            "costs": {
-                "iron": 4,
-                "wood": 15,
-                "food": 8
-            }
-        },
-        "shortbow": {
-            "characteristics": {
-                "health": 100,
-                "range": 1,
-                "damage": 8,
-                "defense": 4,
-                "pierce_defense": 2,
-                "speed": 10,
-                "food_upkeep": 1,
-                "production_time": 10
-            },
-            "costs": {
-                "iron": 4,
-                "wood": 15,
-                "food": 8
-            }
-        }
+    "maceman": {
+      "characteristics": {
+        "health": 120,
+        "range": 1,
+        "damage": 12,
+        "defense": 5,
+        "pierce_defense": 2,
+        "speed": 10,
+        "food_upkeep": 1,
+        "production_time": 12
+      },
+      "costs": {
+        "iron": 10,
+        "wood": 5,
+        "food": 15
+      }
     },
-    "military_center": {
-        "spearman": {
-            "characteristics": {
-                "health": 100,
-                "range": 1,
-                "damage": 8,
-                "defense": 4,
-                "pierce_defense": 2,
-                "speed": 10,
-                "food_upkeep": 1,
-                "production_time": 10
-            },
-            "costs": {
-                "iron": 18,
-                "wood": 10,
-                "food": 15
-            }
-        },
-        "pikeman": {
-            "characteristics": {
-                "health": 100,
-                "range": 1,
-                "damage": 8,
-                "defense": 4,
-                "pierce_defense": 2,
-                "speed": 10,
-                "food_upkeep": 1,
-                "production_time": 10
-            },
-            "costs": {
-                "iron": 15,
-                "wood": 25,
-                "food": 18
-            }
-        }
+    "short_sword": {
+      "characteristics": {
+        "health": 140,
+        "range": 1,
+        "damage": 14,
+        "defense": 5,
+        "pierce_defense": 4,
+        "speed": 10,
+        "food_upkeep": 1,
+        "production_time": 14
+      },
+      "costs": {
+        "iron": 15,
+        "wood": 10,
+        "food": 15
+      }
+    },
+    "long_sword": {
+      "characteristics": {
+        "health": 150,
+        "range": 1,
+        "damage": 16,
+        "defense": 7,
+        "pierce_defense": 6,
+        "speed": 10,
+        "food_upkeep": 2,
+        "production_time": 16
+      },
+      "costs": {
+        "iron": 20,
+        "wood": 10,
+        "food": 18
+      }
     }
+  },
+  "shooting_range": {
+    "rock_thrower": {
+      "characteristics": {
+        "health": 40,
+        "range": 3,
+        "damage": 6,
+        "defense": 2,
+        "pierce_defense": 2,
+        "speed": 12,
+        "food_upkeep": 1,
+        "production_time": 12
+      },
+      "costs": {
+        "iron": 2,
+        "wood": 10,
+        "food": 5
+      }
+    },
+    "slinger": {
+      "characteristics": {
+        "health": 100,
+        "range": 1,
+        "damage": 8,
+        "defense": 4,
+        "pierce_defense": 2,
+        "speed": 10,
+        "food_upkeep": 1,
+        "production_time": 10
+      },
+      "costs": {
+        "iron": 4,
+        "wood": 15,
+        "food": 8
+      }
+    },
+    "shortbow": {
+      "characteristics": {
+        "health": 100,
+        "range": 1,
+        "damage": 8,
+        "defense": 4,
+        "pierce_defense": 2,
+        "speed": 10,
+        "food_upkeep": 1,
+        "production_time": 10
+      },
+      "costs": {
+        "iron": 4,
+        "wood": 15,
+        "food": 8
+      }
+    }
+  },
+  "military_center": {
+    "spearman": {
+      "characteristics": {
+        "health": 100,
+        "range": 1,
+        "damage": 8,
+        "defense": 4,
+        "pierce_defense": 2,
+        "speed": 10,
+        "food_upkeep": 1,
+        "production_time": 10
+      },
+      "costs": {
+        "iron": 18,
+        "wood": 10,
+        "food": 15
+      }
+    },
+    "pikeman": {
+      "characteristics": {
+        "health": 100,
+        "range": 1,
+        "damage": 8,
+        "defense": 4,
+        "pierce_defense": 2,
+        "speed": 10,
+        "food_upkeep": 1,
+        "production_time": 10
+      },
+      "costs": {
+        "iron": 15,
+        "wood": 25,
+        "food": 18
+      }
+    }
+  }
 }

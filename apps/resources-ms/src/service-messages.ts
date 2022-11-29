@@ -1,6 +1,6 @@
 import { CreateFacilityDto } from 'apps/cme-backend/src/facilities/dto/create-facility.dto';
 import { CreateOrderDto } from 'apps/cme-backend/src/orders/dto/create-order.dto';
-import { VillageResourceType } from 'apps/cme-backend/src/villages-resource-types/village-resource-type.entity';
+import { TransferResourcesToStorage } from 'apps/cme-backend/src/villages/dto/transfer-storage-vault.dto';
 import { Village } from 'apps/cme-backend/src/villages/village.entity';
 
 export const ResourcesMicroServiceName = 'RESOURCES_MS';
@@ -17,6 +17,7 @@ export const ResourcesMicroServiceMessages = {
   MERGE_UNIT_RULES: `${ResourcesMicroServiceName}_merge_unit_rules`,
   EXCHANGE_RESOURCES_OWN_VILLAGES: `${ResourcesMicroServiceName}_exchange_resources_own_villages`,
   EXCHANGE_MILITARY_RESOURCES_OWN_VILLAGES: `${ResourcesMicroServiceName}_exchange_military_resources_own_villages`,
+  TRANSFER_RESOURCE_TO_VAULT_STORAGE: `${ResourcesMicroServiceName}_transfer_resource_to_vault_storage`,
 };
 
 export type FindFacilityMsReq = Readonly<{
@@ -29,7 +30,10 @@ export type UpgradeFacilityMsReq = Readonly<{
   userId: number;
 }>;
 
-export type CreateFacilityMsReq = CreateFacilityDto;
+export type CreateFacilityMsReq = Readonly<{
+  facility: CreateFacilityDto;
+  userId: number;
+}>;
 
 export type FindFacilitiesForVillageMsReq = Readonly<{
   villageId: number;
@@ -43,15 +47,26 @@ export type CreateOrderMsReq = CreateOrderDto;
 
 export type FormatVillageResourcesMsReq = Village;
 
+export type TransferableResource = {
+  type: string;
+  count: number;
+};
+
 export type ExchangeResBetweenOwnVillageMsReq = Readonly<{
   senderVillageId: number;
   receiverVillageId: number;
   sentResources: Array<{
     type: string;
     count: number;
-  }>;
+  }>; // TODO: factorise that in a type
   userId: number;
 }>;
+
+export type TransferType = 'WITHDRAW' | 'DEPOSIT';
+
+export class TransferToVaultStorageMsReq extends TransferResourcesToStorage {
+  villageId: number;
+}
 
 export type ExchangeMilitaryResBetweenOwnVillageMsReq = Readonly<{
   senderVillageId: number;

@@ -13,7 +13,7 @@ describe('AppController', () => {
         {
           provide: AuthService,
           useValue: mock<AuthService>(),
-        }
+        },
       ],
     }).compile();
 

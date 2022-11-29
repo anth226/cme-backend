@@ -20,6 +20,6 @@ export type VillageResourcesSummaryResourceFighter = VillageResourcesSummaryReso
   }>;
 
 export type VillageResourcesSummary = Readonly<{
-  fighters: VillageResourcesSummaryResourceFighter[];
-  others: VillageResourcesSummaryResource[];
+  fighters: Array<VillageResourcesSummaryResourceFighter>;
+  others: Array<VillageResourcesSummaryResource>;
 }>;

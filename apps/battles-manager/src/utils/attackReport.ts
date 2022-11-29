@@ -1,9 +1,9 @@
 import * as _ from 'lodash';
 
-import { StakeholderStatus, unitInfo, unitInfoByType } from '../types';
+import { StakeholderStatus, UnitInfo, UnitInfoByType } from '../types';
 
 const computeCasualtiesForTeam = (
-  stakeholderUnitsInfoByType: unitInfoByType,
+  stakeholderUnitsInfoByType: UnitInfoByType,
   casualtiesRatio: number,
 ) => {
   return _.mapValues(stakeholderUnitsInfoByType, (unitsInfo) => {
@@ -17,9 +17,9 @@ const computeCasualtiesForTeam = (
 };
 
 const computePointsForTeam = (
-  stakeholderUnitsInfoByType: unitInfoByType,
+  stakeholderUnitsInfoByType: UnitInfoByType,
   stakeholderStatus: StakeholderStatus,
-  unitsInfo: unitInfo[],
+  unitsInfo: Array<UnitInfo>,
 ): number => {
   return _.sumBy(unitsInfo, (unitInfo) => {
     if (stakeholderUnitsInfoByType[unitInfo.unitTypeName] === undefined) {
@@ -42,7 +42,7 @@ export const generateAttackReport = (
   attackerUnitsInfoByType: Record<string, any>,
   defenderVillageId: number,
   defenderUnitsInfoByType: Record<string, any>,
-  unitsInfo: unitInfo[],
+  unitsInfo: Array<UnitInfo>,
 ) => {
   // Step 1: compute logical points for each team and find out who wins
   const attackerPoints = computePointsForTeam(

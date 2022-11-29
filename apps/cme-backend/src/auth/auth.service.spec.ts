@@ -12,7 +12,7 @@ describe('AuthService', () => {
   const user = {
     username: 'cryptomonkey',
     email: 'crypto@monkey.com',
-    password: 'banana'
+    password: 'banana',
   } as User;
 
   beforeEach(async () => {
@@ -34,10 +34,14 @@ describe('AuthService', () => {
   });
 
   it('should return the user (positive)', async () => {
-    const hashed = '$2b$10$B7m2QH2fF4XxoApMgqjbVOelt2E7ytKWtFR4M09xYD9AlO/JCVm1a';
-    const findSpy = jest.spyOn(service['userRepository'], 'findOneByUsername').mockResolvedValue({
-      ...user, password: hashed
-    });
+    const hashed =
+      '$2b$10$B7m2QH2fF4XxoApMgqjbVOelt2E7ytKWtFR4M09xYD9AlO/JCVm1a';
+    const findSpy = jest
+      .spyOn(service['userRepository'], 'findOneByUsername')
+      .mockResolvedValue({
+        ...user,
+        password: hashed,
+      });
 
     const result = await service.validateUser(user.username, user.password);
 
@@ -54,8 +58,10 @@ describe('AuthService', () => {
     expect(result).toBeUndefined();
   });
 
-  it('should return undefined (passwords don\'t match)', async () => {
-    const findSpy = jest.spyOn(service['userRepository'], 'findOneByUsername').mockResolvedValue(user);
+  it("should return undefined (passwords don't match)", async () => {
+    const findSpy = jest
+      .spyOn(service['userRepository'], 'findOneByUsername')
+      .mockResolvedValue(user);
 
     const result = await service.validateUser(user.username, 'brute-forced');
 

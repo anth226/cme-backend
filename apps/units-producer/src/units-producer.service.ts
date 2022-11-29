@@ -9,6 +9,8 @@ import { RedisService } from 'nestjs-redis';
 import { Facility } from 'apps/cme-backend/src/facilities/facility.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 
+import { MILITARY_RESOURCES } from '@app/game-rules';
+
 @Injectable()
 export class UnitsProducerService {
   private redisClient: Redis.Redis;
@@ -36,15 +38,26 @@ export class UnitsProducerService {
     // TO DO: fetch from DB
     await Promise.mapSeries(
       [
-        'clubman',
-        'maceman',
-        'short_sword',
-        'long_sword',
-        'rock_thrower',
-        'slinger',
-        'shortbow',
-        'spearman',
-        'pikeman',
+        [MILITARY_RESOURCES.STONE_HUNTER],
+        [MILITARY_RESOURCES.STONE_SLINGER],
+        [MILITARY_RESOURCES.STONE_SMASHER],
+        [MILITARY_RESOURCES.BERSERKER],
+        [MILITARY_RESOURCES.TRIBAL_WARRIOR],
+        [MILITARY_RESOURCES.TRIBAL_ARCHER],
+        [MILITARY_RESOURCES.TRIBAL_BRUTE],
+        [MILITARY_RESOURCES.TRIBAL_CHARGER],
+        [MILITARY_RESOURCES.SWORDSMAN],
+        [MILITARY_RESOURCES.ARCHER],
+        [MILITARY_RESOURCES.AX_LORD],
+        [MILITARY_RESOURCES.EXECUTIONER],
+        [MILITARY_RESOURCES.CONSCRIPT],
+        [MILITARY_RESOURCES.RIFLEMAN],
+        [MILITARY_RESOURCES.HEAVY_GUNNER],
+        [MILITARY_RESOURCES.ARMORED_CHARGER],
+        [MILITARY_RESOURCES.MODERN_INFANTRY],
+        [MILITARY_RESOURCES.SHARPSHOOTER],
+        [MILITARY_RESOURCES.BLACK_OPS],
+        [MILITARY_RESOURCES.DEMOLITION_UNIT],
       ],
       async (resourceType: string) => {
         const listName = `pending:${resourceType}`;
@@ -80,8 +93,8 @@ export class UnitsProducerService {
           vrt.village_id = ${villageId}
       `);
 
-        let deliveredQuantity;
-        let villageResourceTypeCount;
+        let deliveredQuantity = 0;
+        let villageResourceTypeCount = null;
 
         if (rows.length === 1) {
           deliveredQuantity = rows[0].delivered_quantity;
@@ -125,20 +138,27 @@ export class UnitsProducerService {
             `;
             }
             await this.queryRunner.query(query);
+            deliveredQuantity += 1;
 
             // Look if the facility has other units to produce.
             const isCurrentProductionContinued =
-              rows.length === 0 || deliveredQuantity + 1 < orderedQuantity;
+              deliveredQuantity < orderedQuantity;
+
+            const facility = await this.facilitiesRepository.findOne({
+              where: { id: facilityId },
+            });
 
             if (!isCurrentProductionContinued) {
-              const facility = await this.facilitiesRepository.findOne({
-                where: { id: facilityId },
-              });
-
               // release the facility of its duties.
               await this.queryRunner.manager.getRepository(Facility).save({
                 ...facility,
                 isInProduction: false,
+                lastProductionAt: new Date(Date.now()),
+              });
+            } else {
+              await this.queryRunner.manager.getRepository(Facility).save({
+                ...facility,
+                lastProductionAt: new Date(Date.now()),
               });
             }
 

@@ -1,62 +1,107 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
+import { Mkc__factory } from './typechain';
+import { Mkc } from './typechain/Mkc';
+
+import {
+  BigNumber,
+  BigNumberish,
+  ContractTransaction,
+  providers,
+  Wallet,
+} from 'ethers';
+
+import {
+  BlockchainModuleOptions,
+  BLOCKCHAIN_MODULE_OPTIONS,
+} from './blockchain.common';
+
+export type TokenTransferOptions = {
+  receipt: string;
+  amount: BigNumberish;
+  signer?: string;
+  fund?: boolean;
+};
 
 @Injectable()
 export class BlockchainService {
-  public async getPublicKey(web3: any, private_key: string) {
-    const publicKeyAccount = await web3.eth.accounts.privateKeyToAccount(
-      private_key,
-    );
-    if (publicKeyAccount == null) throw 'invalid private key';
-    const publicKey = publicKeyAccount.address;
-    return publicKey;
-  }
-  public gasMultiplier(mode) {
-    switch (mode) {
-      case 'low':
-        return 1;
-      case 'medium':
-        return 1.5;
-      case 'fast':
-        return 2;
-      default:
-        return null;
-    }
-  }
+  private provider: providers.JsonRpcProvider;
+  private gameWallet: Wallet;
+  public mkc: Mkc;
 
-  public async sendSignedTransaction(
-    web3: any,
-    toAddress: string,
-    private_key: string,
-    gasFee: number,
-    sendValue: string,
-    gasLimit: number,
+  constructor(
+    @Inject(BLOCKCHAIN_MODULE_OPTIONS) private options: BlockchainModuleOptions,
   ) {
-    try {
-      const publicKey = await this.getPublicKey(web3, private_key);
+    this.provider = new providers.JsonRpcProvider(this.options.rpc);
+    this.mkc = Mkc__factory.connect(this.options.mkc.address, this.provider);
+    this.gameWallet = new Wallet(
+      this.options.gameAccount.privateKey,
+      this.provider,
+    );
+  }
 
-      const txCount = await web3.eth.getTransactionCount(publicKey);
-      const txObject = {
-        nonce: web3.utils.toHex(txCount),
-        gasLimit: web3.utils.toHex(gasLimit - 100),
-        gasPrice: gasFee,
-        to: toAddress,
-        value: sendValue,
-      };
+  async getBlock(): Promise<number> {
+    return this.provider.getBlockNumber();
+  }
 
-      const signTransaction = await web3.eth.accounts.signTransaction(
-        txObject,
-        private_key,
-      );
+  async getTransactionReceipt(
+    transactionHash: string,
+  ): Promise<providers.TransactionReceipt> {
+    return this.provider.getTransactionReceipt(transactionHash);
+  }
 
-      const tranasctionReceipt = await web3.eth.sendSignedTransaction(
-        signTransaction.rawTransaction,
-      );
+  async getAvaxBalance(address: string): Promise<BigNumber> {
+    return await this.provider.getBalance(address);
+  }
 
-      return tranasctionReceipt;
-    } catch (error: any) {
-      console.log(error);
-      if (error.receipt !== undefined) return error.receipt;
-      return error;
+  async getMkcBalance(address: string): Promise<BigNumber> {
+    return await this.mkc.balanceOf(address);
+  }
+
+  async fundIfNeeded(receipt: string, gasRequired: BigNumber) {
+    const gasPrice = await this.provider.getGasPrice();
+
+    // Enough for 10 transfers
+    const fundAmount = gasRequired.mul(gasPrice).mul(10);
+    const minFundAmount = gasRequired.mul(gasPrice).mul(5);
+
+    const receiptBalance = await this.getAvaxBalance(receipt);
+    const gameWalletBalance = await this.getAvaxBalance(
+      this.gameWallet.address,
+    );
+
+    if (gameWalletBalance.lte(fundAmount)) {
+      throw new Error('Game wallet with insuficient funds');
     }
+
+    // Fund if the avax balance is less than 5 transfers
+    if (receiptBalance.lte(minFundAmount)) {
+      const tx = await this.transferAvax(receipt, fundAmount);
+      await tx.wait(1);
+    }
+  }
+
+  async transferMkc(opts: TokenTransferOptions): Promise<ContractTransaction> {
+    const sender = opts.signer
+      ? new Wallet(opts.signer, this.provider)
+      : this.gameWallet;
+
+    if (opts.fund && opts.signer) {
+      const gasRequired = await this.mkc
+        .connect(sender)
+        .estimateGas.transfer(opts.receipt, opts.amount);
+
+      await this.fundIfNeeded(sender.address, gasRequired);
+    }
+
+    return await this.mkc.connect(sender).transfer(opts.receipt, opts.amount);
+  }
+
+  async transferAvax(
+    receipt: string,
+    amount: BigNumberish,
+    signer?: string,
+  ): Promise<providers.TransactionResponse> {
+    const sender = signer ? new Wallet(signer, this.provider) : this.gameWallet;
+    return await sender.sendTransaction({ to: receipt, value: amount });
   }
 }

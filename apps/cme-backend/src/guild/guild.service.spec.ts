@@ -42,7 +42,7 @@ describe('GuildService', () => {
     delete: jest.fn(),
     remove: jest.fn(),
     findByIds: jest.fn(
-      (ids: number[]) =>
+      (ids: Array<number>) =>
         new Promise((resolve) => {
           resolve(ids);
         }),

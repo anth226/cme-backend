@@ -14,11 +14,13 @@ describe('VillagesResourceTypesService', () => {
         {
           provide: 'VillageResourceTypeRepository',
           useValue: mock<Repository<VillageResourceType>>(),
-        }
+        },
       ],
     }).compile();
 
-    service = module.get<VillagesResourceTypesService>(VillagesResourceTypesService);
+    service = module.get<VillagesResourceTypesService>(
+      VillagesResourceTypesService,
+    );
   });
 
   it('should be defined', () => {

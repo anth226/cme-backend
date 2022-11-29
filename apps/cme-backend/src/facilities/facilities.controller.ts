@@ -50,12 +50,6 @@ export class FacilitiesController {
     });
   }
 
-  // TODO: remove this route when not used by the frontend anymore
-  @Get()
-  findAll(): Promise<Facility[]> {
-    return this.facilitiesRepository.find();
-  }
-
   // Todo: add this request in the village controller as /villages/:id/facilities : it has nothing to do here
   // Check with the front if this route is needed and delete it when it's ok.
   @Get('village/:id')
@@ -91,15 +85,15 @@ export class FacilitiesController {
 
   @Post()
   @UsePipes(new ValidationPipe({ transform: true }))
-  create(@Body() facility: CreateFacilityDto) {
+  create(@Request() req, @Body() facility: CreateFacilityDto) {
     const pattern = {
       cmd: ResourcesMicroServiceMessages.CREATE_FACILITY,
     };
 
-    return this.resourcesMSClient.send<any, CreateFacilityMsReq>(
-      pattern,
+    return this.resourcesMSClient.send<any, CreateFacilityMsReq>(pattern, {
       facility,
-    );
+      userId: req.user.id,
+    });
   }
 
   @Put(':id/upgrade')

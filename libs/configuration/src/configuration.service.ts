@@ -11,10 +11,9 @@ export class ConfigurationService {
   private readonly config: any;
 
   constructor(@Inject('CONFIG_OPTIONS') private options) {
-    const filePath = path.resolve(options.projectRoot, 'config', YAML_CONFIG_FILENAME);
-    this.config = yaml.load(
-      readFileSync(filePath, 'utf8'),
-    )
+    const filePath = path.resolve(options.configRoot, YAML_CONFIG_FILENAME);
+    console.log('---- the config file is: ', filePath);
+    this.config = yaml.load(readFileSync(filePath, 'utf8'));
   }
 
   get<T>(setting: string): T {

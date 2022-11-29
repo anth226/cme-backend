@@ -1,13 +1,13 @@
 #!/bin/bash
 
 #Dev by default
-if [ -z "${1}" ]; then 
-    ENV='dev'
+if [ -z "$1" ]; then 
+    ENV_VAL='dev'
 else 
-    ENV=${1}
+    ENV_VAL=$1
 fi
 
-echo "Booting $ENV environment"
+echo "Booting $ENV_VAL environment"
 
 if [ "$(uname)" == "Darwin" ]; then
     # For macos users
@@ -29,4 +29,4 @@ docker build - < ./dockerfile.base -t cme/app-base
 docker tag cme/app-base:latest localhost:5001/cme/app-base
 docker push localhost:5001/cme/app-base
 
-ENV=$1 docker-compose up --build -d db adminer redis
+ENV=$ENV_VAL docker-compose up --build -d db adminer redis

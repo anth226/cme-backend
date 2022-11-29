@@ -6,9 +6,8 @@ import { jwtConstants } from './constants';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
-  constructor(
+  constructor() {
     // private usersService: UsersService,
-  ) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       // TO DO IN PROD ENVIRONMENT
@@ -19,7 +18,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: any) {
-    console.log(JSON.stringify(payload, null, 2));
+    console.log(JSON.stringify(payload, null, ''));
     const { sub: id, username } = payload;
     // const { role } = await this.usersService.findOne(id);
     return { id, username, roles: ['user'] };

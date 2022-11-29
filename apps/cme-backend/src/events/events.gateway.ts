@@ -33,7 +33,7 @@ export class EventsGateway
     client.leave(`user-${client.userData.sub}`);
   }
 
-  handleConnection(client: AuthenticatedSocket, ...args: any[]) {
+  handleConnection(client: AuthenticatedSocket, ...args: Array<any>) {
     this.logger.log(`Client connected: ${client.id}`);
     client.emit('test', { hello: 'from the other side' });
     client.join(`user-${client.userData.sub}`);

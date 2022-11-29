@@ -5,12 +5,12 @@ import { VillageResourceType } from './village-resource-type.entity';
 
 @Injectable()
 export class VillagesResourceTypesService {
-    constructor(
-        @InjectRepository(VillageResourceType)
-        private villagesResourceTypesRepository: Repository<VillageResourceType>
-    ) {}
+  constructor(
+    @InjectRepository(VillageResourceType)
+    private villagesResourceTypesRepository: Repository<VillageResourceType>,
+  ) {}
 
-    /* async findByVillage(id: Number): Promise<VillageResourceType[]> {
+  /* async findByVillage(id: Number): Promise<VillageResourceType[]> {
         return this.villagesResourceTypesRepository.
     } */
 }

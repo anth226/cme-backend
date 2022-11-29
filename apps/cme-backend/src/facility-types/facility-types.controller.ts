@@ -6,13 +6,11 @@ import { FacilityTypesService } from './facility-types.service';
 
 @Controller('facility-types')
 export class FacilityTypesController {
-    constructor(
-        private facilityTypesService: FacilityTypesService,
-    ) {}
+  constructor(private facilityTypesService: FacilityTypesService) {}
 
-    @Public()
-    @Get()
-    async index(@Request() req): Promise<FacilityType[]> {
-        return this.facilityTypesService.findAll();
-    }
+  @Public()
+  @Get()
+  async index(@Request() req): Promise<Array<FacilityType>> {
+    return this.facilityTypesService.findAll();
+  }
 }

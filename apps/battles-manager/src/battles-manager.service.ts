@@ -7,12 +7,20 @@ import { RedisService } from 'nestjs-redis';
 import * as _ from 'lodash';
 
 import {
-  casualtiesInfoByUnitTypeId,
-  attackReport,
-  unitInfo,
-  unitInfoByType,
+  CasualtiesInfoByUnitTypeId,
+  AttackReport,
+  UnitInfo,
+  UnitInfoByType,
+  StolenResource,
+  RedisReturningAttackData,
 } from './types';
 import { generateAttackReport } from './utils/attackReport';
+import {
+  allResourcesAsString,
+  allUnitsAsString,
+  getRelatedCharacteristic,
+} from '@app/game-rules';
+import { isEmpty } from 'lodash';
 
 // TODO: when new units implemented, replace with unit.loadCapacity
 const GENERIC_LOAD_CAPACITY = 60;
@@ -21,7 +29,7 @@ const GENERIC_LOAD_CAPACITY = 60;
 export class BattlesManagerService {
   private redisClient: Redis.Redis;
   private queryRunner: QueryRunner;
-  private unitsInfo: unitInfo[];
+  private unitsInfo: Array<UnitInfo>;
 
   constructor(
     private connection: Connection,
@@ -33,33 +41,39 @@ export class BattlesManagerService {
     this.queryRunner = this.connection.createQueryRunner();
     await this.queryRunner.connect();
 
-    this.unitsInfo = await this.queryRunner.query(`
+    const unitsInfo = await this.queryRunner.query(`
       SELECT
         id as "unitTypeId",
-        type as "unitTypeName", 
-        characteristics
+        type as "unitTypeName"
       FROM
         resource_types
       WHERE
-        characteristics IS NOT NULL
+        type in (${allUnitsAsString})
     `);
+
+    this.unitsInfo = unitsInfo.map((ui) => {
+      return {
+        ...ui,
+        characteristics: getRelatedCharacteristic(ui.unitTypeName),
+      };
+    });
   }
 
-  getUpdateValuesAsSql(stakeholderCasualties: casualtiesInfoByUnitTypeId) {
+  getUpdateValuesAsSql(stakeholderCasualties: CasualtiesInfoByUnitTypeId) {
     return Object.values(stakeholderCasualties).reduce(
-      (acc, { unitTypeId, unitTypeName, count }, i) => {
+      (acc, { unitTypeId, count }, i) => {
         return `${acc}${i === 0 ? '' : ','}(${unitTypeId},${count})`;
       },
       '',
     );
   }
 
-  async updateAttackerStolenResourcesAfterReturnSql(
+  async updateDefenderStolenResources(
     attackId,
     attackerVillageId,
     defenderVillageId,
-    unitsInfoLeftByType,
-  ) {
+    unitsInfoLeftByType: UnitInfoByType,
+  ): Promise<Array<StolenResource>> {
     const defenderResourcesInfo = await this.queryRunner.query(`
       SELECT
         vrt.resource_type_id AS "resourceTypeId",
@@ -70,11 +84,11 @@ export class BattlesManagerService {
       JOIN resource_types rt ON vrt.resource_type_id = rt.id
       WHERE (
         vrt.village_id = ${defenderVillageId} AND
-        rt.characteristics IS NULL
+        rt.type in (${allResourcesAsString})
       )
     `);
 
-    const stolenResources = [];
+    const stolenResources: Array<StolenResource> = [];
 
     let totalLoadCapacity = 0;
 
@@ -110,52 +124,70 @@ export class BattlesManagerService {
       }
     });
 
-    const stolenResourcesFormatted = Object.values(stolenResources).reduce(
-      (acc, { id, count }, i) => {
-        return `${acc}${i === 0 ? '' : ','}(${id},${count})`;
-      },
-      '',
+    const stolenResourcesFormatted = this.formatStolenResources(
+      stolenResources,
     );
 
-    await this.queryRunner.query(`
-      UPDATE villages_resource_types AS vrt
-      SET
-        count = count + v.stolen_count,
-        updated_at = NOW()
-        FROM (values ${stolenResourcesFormatted}) AS v(resource_type_id, stolen_count)
-      WHERE
-        vrt.village_id = ${attackerVillageId} AND
-        vrt.resource_type_id = v.resource_type_id;
+    if (!isEmpty(stolenResources)) {
+      await this.queryRunner.query(`
+        UPDATE villages_resource_types AS vrt
+        SET
+          count = count - v.stolen_count,
+          updated_at = NOW()
+          FROM (values ${stolenResourcesFormatted}) AS v(resource_type_id, stolen_count)
+        WHERE
+          vrt.village_id = ${defenderVillageId} AND
+          vrt.resource_type_id = v.resource_type_id;
+      `);
+    }
 
-      UPDATE villages_resource_types AS vrt
-      SET
-        count = count - v.stolen_count,
-        updated_at = NOW()
-        FROM (values ${stolenResourcesFormatted}) AS v(resource_type_id, stolen_count)
-      WHERE
-        vrt.village_id = ${defenderVillageId} AND
-        vrt.resource_type_id = v.resource_type_id;
-  
+    await this.queryRunner.query(`
       UPDATE attacks
       SET
         stolen_resources = '${JSON.stringify({ resources: stolenResources })}'
       WHERE
         id = ${attackId};
     `);
+
+    return stolenResources;
+  }
+
+  async giveResourcesToAttacker(
+    stolenResources: Array<StolenResource>,
+    attackerVillageId: number,
+  ) {
+    const stolenResourcesFormatted = this.formatStolenResources(
+      stolenResources,
+    );
+    await this.queryRunner.query(`
+        UPDATE villages_resource_types AS vrt
+        SET
+          count = count + v.stolen_count,
+          updated_at = NOW()
+          FROM (values ${stolenResourcesFormatted}) AS v(resource_type_id, stolen_count)
+        WHERE
+          vrt.village_id = ${attackerVillageId} AND
+          vrt.resource_type_id = v.resource_type_id;`);
+  }
+
+  private formatStolenResources(
+    stolenResources: Array<StolenResource>,
+  ): string {
+    return stolenResources.reduce((acc, { id, count }, i) => {
+      return `${acc}${i === 0 ? '' : ','}(${id},${count})`;
+    }, '');
   }
 
   async updateAttackerValuesAfterReturnAsSql(
-    unitsInfoByType: unitInfoByType,
-    casualties: casualtiesInfoByUnitTypeId,
+    unitsInfoByType: UnitInfoByType,
+    unitsInfoLeftByType: UnitInfoByType,
     attackerVillageId: number,
     attackId: number,
   ) {
-    // returns a string with the following format '(unit_type_id, casualties_count)'
-    const attackerCasualtiesCount = Object.values(casualties).reduce(
-      (acc, { unitTypeId, unitTypeName, count: casualtiesCount }, i) => {
-        return `${acc}${i === 0 ? '' : ','}(${unitTypeId},${
-          unitsInfoByType[unitTypeName].count - casualtiesCount
-        })`;
+    // returns a string with the following format '(unit_type_id, returned_count)'
+    const attackerCasualtiesCount = Object.values(unitsInfoLeftByType).reduce(
+      (acc, { unitTypeId, count: unitsLeft }, i) => {
+        return `${acc}${i === 0 ? '' : ','}(${unitTypeId},${unitsLeft})`;
       },
       '',
     );
@@ -179,7 +211,7 @@ export class BattlesManagerService {
     `);
   }
 
-  async updateDb(attackFinalReport: attackReport) {
+  async updateDb(attackFinalReport: AttackReport) {
     const {
       attackId,
       travelTime,
@@ -227,8 +259,16 @@ export class BattlesManagerService {
     // Update the defender village resources
     await this.queryRunner.query(sqlQuery);
 
-    // Update the attacker village resources, but only after they returned
+    // Update the defender village resourced, but don't update attacker
+    // resources until troops are back
     if (attackerWon) {
+      const attackerUnits = unitsInfoByType[attackerVillageId];
+      const stolenResources = await this.updateDefenderStolenResources(
+        attackId,
+        attackerVillageId,
+        defenderVillageId,
+        attackerUnits,
+      );
       await this.redisClient
         .zadd(
           `delayed:return`,
@@ -236,12 +276,13 @@ export class BattlesManagerService {
           JSON.stringify({
             attackId,
             attackerVillageId,
-            attackerUnitsInfoByType: unitsInfoByType[attackerVillageId],
+            attackerUnitsInfoByType: attackerUnits,
             attackerCasualties:
               casualties[attackerVillageId].casualtiesInfoByUnitTypeId,
             defenderVillageId,
+            stolenResources: stolenResources,
             queue: 'pending:return',
-          }),
+          } as RedisReturningAttackData),
         )
         .catch((e) => {
           console.error(e);
@@ -286,7 +327,7 @@ export class BattlesManagerService {
         JOIN resource_types rt ON vrt.resource_type_id = rt.id
         WHERE (
           vrt.village_id = ${defenderVillageId} AND
-          rt.characteristics IS NOT NULL
+          rt.type in (${allUnitsAsString})
         )
       `);
 
@@ -318,13 +359,14 @@ export class BattlesManagerService {
       return;
     }
 
-    const parsed = JSON.parse(item);
+    const parsed: RedisReturningAttackData = JSON.parse(item);
     const {
       attackerVillageId,
       attackerUnitsInfoByType,
       attackerCasualties,
       attackId,
       defenderVillageId,
+      stolenResources,
     } = parsed;
 
     const unitsInfoLeftByType = { ...attackerUnitsInfoByType };
@@ -335,16 +377,24 @@ export class BattlesManagerService {
       },
     );
 
-    this.updateAttackerStolenResourcesAfterReturnSql(
-      attackId,
-      attackerVillageId,
-      defenderVillageId,
-      unitsInfoLeftByType,
-    );
+    // Backwards compatability for attacks launched before update
+    // TODO: remove after update
+    if (stolenResources === undefined) {
+      this.updateDefenderStolenResources(
+        attackId,
+        attackerVillageId,
+        defenderVillageId,
+        unitsInfoLeftByType,
+      ).then((resources) => {
+        return this.giveResourcesToAttacker(resources, attackerVillageId);
+      });
+    } else {
+      this.giveResourcesToAttacker(stolenResources, attackerVillageId);
+    }
 
     this.updateAttackerValuesAfterReturnAsSql(
       attackerUnitsInfoByType,
-      attackerCasualties,
+      unitsInfoLeftByType,
       attackerVillageId,
       attackId,
     );

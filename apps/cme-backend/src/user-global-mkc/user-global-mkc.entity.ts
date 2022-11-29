@@ -23,8 +23,11 @@ export class UserGlobalMKC {
   })
   user: User;
 
-  @Column()
-  balance: number;
+  @Column({ type: 'decimal' })
+  balance: string;
+
+  @Column({ type: 'decimal', name: 'balance_pending_withdrawal' })
+  balancePendingWithdrawal: string;
 
   @CreateDateColumn({
     name: 'created_at',

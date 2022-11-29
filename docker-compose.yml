@@ -1,87 +1,95 @@
 # Use postgres/example user/password credentials
 version: '3.1'
 
+x-volumes: &volumes
+  volumes:
+    - ./apps:/home/node/app/apps:rw
+    - ./db:/home/node/app/db:rw
+    - ./config:/home/node/app/config:rw
+    - ./libs:/home/node/app/libs:rw
+    - ./migrations:/home/node/app/migrations:rw
+    - ./package.json:/home/node/app/package.json:rw
+
+x-depends: &depends
+  depends_on:
+    - api
+
+x-build: &build
+  context: .
+
 services:
   api:
     container_name: api
+    command:
+      - migrate
     build:
-      context: ./apps/cme-backend
-    environment:
-      NODE_ENV: ${ENV}
+      <<: *build
+      args:
+        ENV: ${ENV}
+        SERVICE: api
     ports:
-      - 3000:3000
-    volumes:
-      - ./:/home/node/app
-      # - ../cme-backend:/home/node/app/cme-backend
-      # - ../libs:/home/node/app/libs
-      # - ../../migrations:/home/node/app/migrations
-      # - ../../package.json:/home/node/app
-      # - ../../yarn.lock:/home/node/app
-      # - ../../tsconfig.build.json:/home/node/app
-      # - ../../tsconfig.json:/home/node/app
-      # - ../../nest-cli.json:/home/node/app
+      - "3000:3000"
+    <<: *volumes
 
   ups:
     container_name: ups
     build:
-      context: ./apps/units-production-scheduler
-    environment:
-      NODE_ENV: ${ENV}
+      <<: *build
+      args:
+        ENV: ${ENV}
+        SERVICE: ups
     ports:
-      - 3001:3001
-    volumes:
-      - ./:/home/node/app
-      # - ../units-production-scheduler:/home/node/app/units-production-scheduler
-      # - ../libs:/home/node/app/units-production-scheduler/libs
-      # - ../../package.json:/home/node/app
-      # - ../../yarn.lock:/home/node/app
-      # - ../../tsconfig.build.json:/home/node/app
-      # - ../../tsconfig.json:/home/node/app
-      # - ../../nest-cli.json:/home/node/app
+      - "3001:3001"
+    <<: *volumes
+    <<: *depends
 
   uprod:
     container_name: uprod
     build:
-      context: ./apps/units-producer
-    environment:
-      NODE_ENV: ${ENV}
+      <<: *build
+      args:
+        ENV: ${ENV}
+        SERVICE: up
     ports:
-      - 3002:3002
-    volumes:
-      - ./:/home/node/app
+      - "3002:3002"
+    <<: *volumes
+    <<: *depends
 
   battles-manager:
     container_name: bm
     build:
-      context: ./apps/battles-manager
-    environment:
-      NODE_ENV: ${ENV}
+      <<: *build
+      args:
+        ENV: ${ENV}
+        SERVICE: bm
     ports:
-      - 3003:3003
-    volumes:
-      - ./:/home/node/app
+      - "3003:3003"
+    <<: *volumes
+    <<: *depends
 
   resources-ms:
     container_name: resources-ms
     build:
-      context: ./apps/resources-ms
-    environment:
-      NODE_ENV: ${ENV}
+      <<: *build
+      args:
+        ENV: ${ENV}
+        SERVICE: resources-ms
     ports:
-      - 3004:3004
-    volumes:
-      - ./:/home/node/app
+      - "3004:3004"
+    <<: *volumes
+    <<: *depends
 
   blockchain-ms:
     container_name: blockchain-ms
     build:
-      context: ./apps/blockchain-ms
-    environment:
-      NODE_ENV: ${ENV}
+      <<: *build
+      args:
+        ENV: ${ENV}
+        SERVICE: blockchain-ms
     ports:
-      - 3005:3005
-    volumes:
-      - ./:/home/node/app
+      - "3005:3005"
+    <<: *volumes
+    <<: *depends
 
   db:
     container_name: pg
@@ -91,7 +99,7 @@ services:
       POSTGRES_PASSWORD: example
       NODE_ENV: ${ENV}
     ports:
-      - 5432:5432
+      - "5433:5432"
     working_dir: /home
     volumes:
       - ./db/snapshots:/docker-entrypoint-initdb.d
@@ -104,7 +112,7 @@ services:
     image: adminer
     restart: always
     ports:
-      - 8081:8080
+      - "8081:8080"
 
   redis:
     container_name: redis
@@ -116,4 +124,4 @@ services:
     sysctls:
       net.core.somaxconn: 511
     ports:
-      - 6379:6379
+      - "6379:6379"

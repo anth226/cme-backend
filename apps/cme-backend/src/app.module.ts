@@ -1,6 +1,7 @@
-import { Module } from '@nestjs/common';
+import { Module, MiddlewareConsumer } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { MainClusteringService } from './clustering.service';
 import { UsersModule } from './users/users.module';
 import { VillagesModule } from './villages/villages.module';
 import { FacilitiesModule } from './facilities/facilities.module';
@@ -27,11 +28,35 @@ import { MkcModule } from './mkc/mkc.module';
 import * as path from 'path';
 import { GuildModule } from './guild/guild.module';
 import { GuildMembersModule } from './guild-members/guild-members.module';
+import { UserWalletTransferModule } from './user-wallet-transfers/user-wallet-transfers.module';
+import { isEmpty } from 'lodash';
+import { MapTilesModule } from './map-tiles/map-tiles.module';
+import { AutomatedVillageHistoryModule } from './automated-village-history/automated-village-history.module';
+
+function routingLogger(req, res, next) {
+  if (!req.originalUrl?.startsWith('/auth/login')) {
+    console.log(
+      '\x1b[36mRouting log -',
+      '\x1b[0m',
+      `${new Date()} -`,
+      '\x1b[34m',
+      `${req.method}`,
+      '\x1b[0m',
+      `on ${req.originalUrl} ${
+        !isEmpty(req.body)
+          ? 'with body ' + JSON.stringify(req.body, null, '')
+          : ''
+      }`,
+    );
+  }
+  next();
+}
 
 @Module({
   imports: [
     ConfigurationModule.register({
       projectRoot: path.resolve(__dirname, '..'),
+      configRoot: path.resolve(__dirname, '..', '..', '..', 'config'),
     }),
     ScheduleModule.forRoot(),
     TypeOrmModule.forRootAsync({
@@ -62,13 +87,19 @@ import { GuildMembersModule } from './guild-members/guild-members.module';
     AttacksModule,
     PublicModule,
     UserGlobalMkcModule,
+    UserWalletTransferModule,
     MkcModule,
     GuildModule,
     GuildMembersModule,
+    MapTilesModule,
+    AutomatedVillageHistoryModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, MainClusteringService],
 })
 export class AppModule {
   constructor(private _connection: Connection) {}
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(routingLogger).forRoutes('*');
+  }
 }

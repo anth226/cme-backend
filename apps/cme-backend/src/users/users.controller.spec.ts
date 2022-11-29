@@ -20,7 +20,7 @@ describe('UsersController', () => {
           provide: 'UserRepository',
           useValue: mock<Repository<User>>(),
         },
-      ]
+      ],
     }).compile();
 
     controller = module.get<UsersController>(UsersController);

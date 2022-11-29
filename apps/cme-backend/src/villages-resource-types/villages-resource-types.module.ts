@@ -4,9 +4,7 @@ import { VillageResourceType } from './village-resource-type.entity';
 import { VillagesResourceTypesService } from './villages-resource-types.service';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([VillageResourceType]),
-  ],
+  imports: [TypeOrmModule.forFeature([VillageResourceType])],
   providers: [VillagesResourceTypesService],
   exports: [VillagesResourceTypesService],
 })

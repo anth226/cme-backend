@@ -1,16 +1,16 @@
 import {
-    Entity,
-    Column,
-    PrimaryGeneratedColumn,
-    CreateDateColumn,
-    UpdateDateColumn,
-    ManyToOne,
-    JoinColumn,
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  CreateDateColumn,
+  UpdateDateColumn,
+  ManyToOne,
+  JoinColumn,
 } from 'typeorm';
 import { FacilityType } from '../facility-types/facility-type.entity';
 import { ResourceType } from '../resource-types/resource-type.entity';
 
-@Entity({name: 'facility_types_resource_types'})
+@Entity({ name: 'facility_types_resource_types' })
 export class FacilityTypeResourceType {
   @PrimaryGeneratedColumn()
   id: number;
@@ -22,24 +22,30 @@ export class FacilityTypeResourceType {
   levelCost: number;
 
   @CreateDateColumn({
-    name: 'created_at'
+    name: 'created_at',
   })
   createdAt: Date;
 
   @UpdateDateColumn({
-    name: 'updated_at'
+    name: 'updated_at',
   })
   updatedAt: Date;
 
-  @ManyToOne(() => FacilityType, facilityType => facilityType.facilityTypesResourceTypes)
+  @ManyToOne(
+    () => FacilityType,
+    (facilityType) => facilityType.facilityTypesResourceTypes,
+  )
   @JoinColumn({
-    name: 'facility_type_id'
+    name: 'facility_type_id',
   })
   facilityType: FacilityType;
-  
-  @ManyToOne(() => ResourceType, resourceType => resourceType.facilityTypesResourceTypes)
+
+  @ManyToOne(
+    () => ResourceType,
+    (resourceType) => resourceType.facilityTypesResourceTypes,
+  )
   @JoinColumn({
-    name: 'resource_type_id'
+    name: 'resource_type_id',
   })
   resourceType: ResourceType;
 }

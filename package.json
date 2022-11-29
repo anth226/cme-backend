@@ -6,8 +6,8 @@
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
-    "build": "nest build configuration && nest build redlock && nest build scheduler && nest build cme-backend && nest build units-production-scheduler",
-    "build:libs": "nest build configuration && nest build redlock && nest build scheduler",
+    "build:libs": "nest build configuration && nest build redlock && nest build scheduler && nest build blockchain && nest build game-rules && nest build errors",
+    "copy:config": "mkdir -p dist/config && cp config/* dist/config/",
     "build:app:api": "nest build cme-backend",
     "build:app:ups": "nest build units-production-scheduler",
     "build:app:up": "nest build units-producer",
@@ -17,6 +17,9 @@
     "build:lib:configuration": "nest build configuration",
     "build:lib:redlock": "nest build redlock",
     "build:lib:scheduler": "nest build scheduler",
+    "build:lib:blockchain": "nest build blockchain",
+    "build:lib:game-rules": "nest build game-rules",
+    "build:lib:errors": "nest build errors",
     "clear": "rimraf dist",
     "clear:app:api": "rimraf dist/apps/cme-backend",
     "clear:app:ups": "rimraf dist/apps/units-production-scheduler",
@@ -33,7 +36,7 @@
     "start:dev:bm": "nest start --watch battles-manager",
     "start:dev:resources-ms": "nest start --watch resources-ms",
     "start:dev:blockchain-ms": "nest start --watch blockchain-ms",
-    "start:prod:api": "nest start cme-backend",
+    "start:prod:api": "nest start",
     "start:prod:ups": "nest start units-production-scheduler",
     "start:prod:up": "nest start units-producer",
     "start:prod:bm": "nest start battles-manager",
@@ -49,7 +52,8 @@
     "test:e2e": "jest --config ./apps/cme-backend/test/jest-e2e.json",
     "pretypeorm": "node -r ts-node/register apps/cme-backend/src/scripts/generate-ormconfig.ts",
     "typeorm": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js",
-    "migrate": "yarn run typeorm migration:run"
+    "migrate": "yarn run typeorm migration:run",
+    "prepare": "husky install"
   },
   "dependencies": {
     "@nestjs-modules/mailer": "^1.6.1",
@@ -66,13 +70,18 @@
     "@nestjs/typeorm": "7.1.5",
     "@nestjs/websockets": "7.6.15",
     "@types/cron": "^1.7.2",
+    "@types/ioredis": "^5.0.0",
     "bcrypt": "5.0.1",
     "class-transformer": "0.4.0",
     "class-validator": "0.13.1",
+    "cluster": "^0.7.7",
     "config": "^3.3.6",
     "ethereum-hdwallet": "^0.1.2",
+    "ethers": "^5.7.1",
+    "ioredis": "^5.2.4",
     "js-yaml": "4.0.0",
     "lodash": "^4.17.21",
+    "nanoid": "^3.3.4",
     "nest-access-control": "2.0.2",
     "nestjs-redis": "1.3.3",
     "nodemailer": "^6.7.2",
@@ -98,6 +107,7 @@
     "@nestjs/cli": "7.6.0",
     "@nestjs/schematics": "7.3.1",
     "@nestjs/testing": "7.6.15",
+    "@typechain/ethers-v5": "^10.1.0",
     "@types/bcrypt": "3.0.0",
     "@types/jest": "26.0.22",
     "@types/js-yaml": "4.0.0",
@@ -105,20 +115,24 @@
     "@types/node": "^14.18.10",
     "@types/socket.io": "2.1.13",
     "@types/supertest": "2.0.11",
-    "@typescript-eslint/eslint-plugin": "3.9.1",
-    "@typescript-eslint/parser": "3.9.1",
-    "eslint": "7.23.0",
-    "eslint-config-prettier": "6.10.0",
-    "eslint-plugin-import": "2.22.1",
+    "@types/ioredis": "5.0.0",
+    "@typescript-eslint/eslint-plugin": "^5.39.0",
+    "@typescript-eslint/parser": "^5.39.0",
+    "eslint": "^8.24.0",
+    "eslint-config-prettier": "^8.5.0",
+    "eslint-plugin-import": "^2.26.0",
+    "husky": "^8.0.2",
     "jest": "26.6.3",
     "jest-mock-extended": "1.0.13",
+    "lint-staged": "^13.0.3",
     "prettier": "2.2.1",
     "supertest": "6.1.3",
     "ts-jest": "26.5.4",
     "ts-loader": "8.1.0",
-    "ts-node": "9.1.1",
+    "ts-node": "^10.9.1",
     "tsconfig-paths": "3.9.0",
-    "typescript": "4.2.3"
+    "typechain": "^8.1.0",
+    "typescript": "^4.3.5"
   },
   "jest": {
     "moduleFileExtensions": [
@@ -134,8 +148,12 @@
     "coverageDirectory": "./coverage",
     "testEnvironment": "node",
     "roots": [
+      "<rootDir>",
       "<rootDir>/apps/",
       "<rootDir>/libs/"
+    ],
+    "modulePaths": [
+      "<rootDir>"
     ],
     "moduleNameMapper": {
       "@app/redlock/(.*)": "<rootDir>/libs/redlock/src/$1",
@@ -145,7 +163,11 @@
       "@app/configuration/(.*)": "<rootDir>/libs/configuration/src/$1",
       "@app/configuration": "<rootDir>/libs/configuration/src",
       "@app/blockchain": "<rootDir>/libs/blockchain/src",
-      "@app/blockchain/(.*)": "<rootDir>/libs/blockchain/src/$1"
+      "@app/blockchain/(.*)": "<rootDir>/libs/blockchain/src/$1",
+      "@app/game-rules/(.*)": "<rootDir>/libs/game-rules/src/$1",
+      "@app/game-rules": "<rootDir>/libs/game-rules/src",
+      "@app/errors": "<rootDir>/libs/errors/src",
+      "@app/errors/(.*)": "<rootDir>/libs/errors/src/$1"
     }
   }
 }

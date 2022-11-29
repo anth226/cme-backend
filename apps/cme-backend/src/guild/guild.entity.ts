@@ -34,5 +34,5 @@ export class Guild {
     eager: true,
     onDelete: 'CASCADE',
   })
-  guildMembers: GuildMembers[];
+  guildMembers: Array<GuildMembers>;
 }

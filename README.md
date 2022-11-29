@@ -8,31 +8,33 @@
 
 ## Table of content
 
-* [Description](#description)
-* [Requirements](#requirements)
-* [Infra](#infra)
- * [Init](#init)
- * [Run](#run)
-* [Architecture / code](#init)
- * [Concept](#description)
- * Redis (TODO)
- * DB (TODO)
-* [How to: push new code](#description)
-* Testing (TODO)
+- [Description](#description)
+- [Requirements](#requirements)
+- [Infra](#infra)
+- [Init](#init)
+- [Run](#run)
+- [Architecture / code](#init)
+- [Concept](#description)
+- Redis (TODO)
+- DB (TODO)
+- [How to: push new code](#description)
+- Testing (TODO)
 
 ## Description
 
 This project is developped using:
-* Javascript / Typescript (https://www.typescriptlang.org/docs/)
-* Nodejs
-* Nest (https://docs.nestjs.com/)
-* Docker
+
+- Javascript / Typescript (https://www.typescriptlang.org/docs/)
+- Nodejs
+- Nest (https://docs.nestjs.com/)
+- Docker
 
 ## Requirements
 
 To be able to run this project and code for it, you'll have to have installed:
-* Node js / npm. The Docker container currently uses version 14, but it might evolve. I recommend using nvm (https://github.com/nvm-sh/nvm )
-* An up-to-date docker system: the easiest way is to use Docker Desktop (https://www.docker.com/products/docker-desktop)
+
+- Node js / npm. The Docker container currently uses version 14, but it might evolve. I recommend using nvm (https://github.com/nvm-sh/nvm )
+- An up-to-date docker system: the easiest way is to use Docker Desktop (https://www.docker.com/products/docker-desktop)
 
 ## Infra
 
@@ -44,7 +46,7 @@ Note: for windows user, it will be necessary to run Docker desktop manually firs
 
 Go to the project's root and run:
 
-```$> ./init.sh```
+`$> ./init.sh`
 
 This will help identify the container to docker without having to push it online in the Docker base.
 
@@ -52,7 +54,7 @@ This will help identify the container to docker without having to push it online
 
 Go to the project's root and run:
 
-```$> ./boot.sh```
+`$> ./boot.sh`
 
 This will launch every service needed to run the project.
 After that, you can see it running directly in Docker Desktop.
@@ -89,19 +91,19 @@ All the services have access to the DB
 |____________________________________________________________________|
 ```
 
-
-
 ## How to: push new code
 
 To keep track of our changes and insure a minimum code quality, we try to do pull requests instead of just pushing to the main branch.
 
 To do that:
-* Everytime you want to start coding a new feature, create a branch for this one
-* Once you're done, propose a PR from this branch to the main branch
-* Assign at least Florian and/or Simon, and don't hesitate to ping them on Discord so they know you just pushed a PR.
-* A review will be done, some changes might be required before approval
-* Once you have approval, you can merge it to the main branch (don't forget to rebase if you see any issue blocking the merge)
+
+- Everytime you want to start coding a new feature, create a branch for this one
+- Once you're done, propose a PR from this branch to the main branch
+- Assign at least Florian and/or Simon, and don't hesitate to ping them on Discord so they know you just pushed a PR.
+- A review will be done, some changes might be required before approval
+- Once you have approval, you can merge it to the main branch (don't forget to rebase if you see any issue blocking the merge)
 
 ## How to: launch the project in the proper environement
-* If it is a new project, use deploy.sh script to init the script, use "dev" "prod" argument to provide env. Default is dev
-* If not, use down.sh without arg, init.sh [env], boot.sh [env]
+
+- If it is a new project, use deploy.sh script to init the script, use "dev" "prod" argument to provide env. Default is dev
+- If not, use down.sh without arg, init.sh [env], boot.sh [env]

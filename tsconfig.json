@@ -21,7 +21,11 @@
       "@app/configuration": ["libs/configuration/src"],
       "@app/configuration/*": ["libs/configuration/src/*"],
       "@app/blockchain/*": ["libs/blockchain/src/*"],
-      "@app/blockchain": ["libs/blockchain/src"]
+      "@app/blockchain": ["libs/blockchain/src"],
+      "@app/game-rules": ["libs/game-rules/src"],
+      "@app/game-rules/*": ["libs/game-res/src"],
+      "@app/errors": ["libs/errors/src"],
+      "@app/errors/*": ["libs/errors/src/*"]
     }
   }
 }

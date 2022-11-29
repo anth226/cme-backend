@@ -1,12 +1,12 @@
 # You specify the stages.
-# Those are the steps that GitLab will go through 
+# Those are the steps that GitLab will go through
 # Order matters a lot.
 stages:
-  #Self made at every commit
-  - staging 
-  #Must be triggered mannualy 
+  #Must be triggered manually
+  - staging
+  #Must be triggered manually
   - production
-      
+
 deploy_to_preprod:
   stage: staging
   retry: 1
@@ -24,9 +24,11 @@ deploy_to_preprod:
     - ssh admin@$IP_DEV 'sudo chown -R admin:admin /home/admin/cme-backend'
     - scp -r cme-backend/apps admin@$IP_DEV:/home/admin/cme-backend/
     - scp cme-backend/package.json admin@$IP_DEV:/home/admin/cme-backend/
-    - ssh admin@$IP_DEV 'sudo cp -R /home/admin/cme-backend/apps/ /home/gitlab-ci/cme-backend/'  
-    - ssh admin@$IP_DEV 'sudo cp /home/admin/cme-backend/package.json /home/gitlab-ci/cme-backend/'  
+    - ssh admin@$IP_DEV 'sudo cp -R /home/admin/cme-backend/apps/ /home/gitlab-ci/cme-backend/'
+    - ssh admin@$IP_DEV 'sudo cp /home/admin/cme-backend/package.json /home/gitlab-ci/cme-backend/'
     - ssh admin@$IP_DEV 'sudo chown -R gitlab-ci:gitlab-ci /home/gitlab-ci/cme-backend'
+    - ssh admin@$IP_DEV 'sudo /home/admin/deploy.sh prod'
+  when: manual
 
 deploy_to_prod:
   stage: production

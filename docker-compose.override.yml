@@ -1,14 +1,11 @@
 version: '3.1'
 
 services:
-
   api:
     environment:
       NODE_ENV: ${ENV}
     ports:
-      - 3000:3000
-    volumes:
-      - ./:/home/node/app
+      - "3000:3000"
 
   db:
     environment:

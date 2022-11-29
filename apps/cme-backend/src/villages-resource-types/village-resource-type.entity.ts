@@ -9,7 +9,7 @@ import {
 } from 'typeorm';
 import { Village } from '../villages/village.entity';
 import { ResourceType } from '../resource-types/resource-type.entity';
-import { IsOptional } from 'class-validator';
+import { AutomatedVillageHistory } from '../automated-village-history/automated-village-history.entity';
 
 @Entity({ name: 'villages_resource_types' })
 export class VillageResourceType {
@@ -34,6 +34,15 @@ export class VillageResourceType {
     name: 'village_id',
   })
   village: Village;
+
+  @ManyToOne(
+    () => AutomatedVillageHistory,
+    (history) => history.initialVillageResources,
+  )
+  @JoinColumn({
+    name: 'automated_village_history_id',
+  })
+  automatedVillageHistory: AutomatedVillageHistory;
 
   @ManyToOne(
     () => ResourceType,

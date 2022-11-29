@@ -67,7 +67,7 @@ export class GuildService {
       throw new Error('Only admin can invite users to guild');
     }
 
-    const members: User[] = await this.usersRepository.findByIds(
+    const members: Array<User> = await this.usersRepository.findByIds(
       guildInvite.members,
     );
     const tempGuildMembers = [];
@@ -90,7 +90,6 @@ export class GuildService {
     } catch {
       throw new Error('You are not in this guild');
     }
-    console.log(guild, 'guuild');
 
     const user: GuildMembers = guild?.guildMembers?.find(
       (member) => member.user.id === req.user.id,

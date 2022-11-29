@@ -5,12 +5,12 @@ import { FacilityType } from './facility-type.entity';
 
 @Injectable()
 export class FacilityTypesService {
-    constructor(
-        @InjectRepository(FacilityType)
-        private facilityTypesRepository: Repository<FacilityType>,
-    ) {}
+  constructor(
+    @InjectRepository(FacilityType)
+    private facilityTypesRepository: Repository<FacilityType>,
+  ) {}
 
-    findAll(): Promise<FacilityType[]> {
-        return this.facilityTypesRepository.find();
-    }
+  findAll(): Promise<Array<FacilityType>> {
+    return this.facilityTypesRepository.find();
+  }
 }

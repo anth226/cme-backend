@@ -1,4 +1,3 @@
-
 import { INestApplicationContext } from '@nestjs/common';
 import { ConfigurationService } from '@app/configuration';
 import { JwtService } from '@nestjs/jwt';
@@ -9,7 +8,7 @@ import { AuthenticatedSocket } from './authenticated-socket.interface';
 export class RedisIoAdapter extends IoAdapter {
   private jwtService: JwtService;
   private configurationService: ConfigurationService;
-  
+
   constructor(private app: INestApplicationContext) {
     super(app);
     this.jwtService = app.get(JwtService);
@@ -20,11 +19,14 @@ export class RedisIoAdapter extends IoAdapter {
     const server = super.createIOServer(port, options);
     server.use((socket: AuthenticatedSocket, next) => {
       try {
-        const decoded = this.jwtService.verify(socket.handshake.headers.authorization.replace('Bearer ', ''), {
-          // TO DO IN PROD ENVIRONMENT
-          // set to false
-          ignoreExpiration: true,
-        });
+        const decoded = this.jwtService.verify(
+          socket.handshake.headers.authorization.replace('Bearer ', ''),
+          {
+            // TO DO IN PROD ENVIRONMENT
+            // set to false
+            ignoreExpiration: true,
+          },
+        );
         console.log(decoded);
         socket.userData = decoded;
         next();
@@ -33,7 +35,9 @@ export class RedisIoAdapter extends IoAdapter {
       }
     });
 
-    const redisAdapter = redisIoAdapter(this.configurationService.get('db.redis'));
+    const redisAdapter = redisIoAdapter(
+      this.configurationService.get('db.redis'),
+    );
     server.adapter(redisAdapter);
 
     return server;

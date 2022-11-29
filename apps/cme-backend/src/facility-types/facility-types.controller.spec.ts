@@ -13,8 +13,8 @@ describe('FacilityTypesController', () => {
         {
           provide: FacilityTypesService,
           useValue: mock<FacilityTypesService>(),
-        }
-      ]
+        },
+      ],
     }).compile();
 
     controller = module.get<FacilityTypesController>(FacilityTypesController);

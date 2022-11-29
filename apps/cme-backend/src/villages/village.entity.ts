@@ -8,11 +8,15 @@ import {
   OneToMany,
   ManyToOne,
   JoinColumn,
+  OneToOne,
+  AfterLoad,
 } from 'typeorm';
 import { User } from '../users/user.entity';
 import { Facility } from '../facilities/facility.entity';
 import { VillageResourceType } from '../villages-resource-types/village-resource-type.entity';
 import { Attack } from '../attacks/attack.entity';
+import { MapTile } from '../map-tiles/map-tile.entity';
+import { AutomatedVillageHistory } from '../automated-village-history/automated-village-history.entity';
 
 @Entity({ name: 'villages' })
 @Unique(['name'])
@@ -26,6 +30,9 @@ export class Village {
 
   @Column()
   population: number;
+
+  @Column()
+  automated: boolean;
 
   @Column()
   x: number;
@@ -43,6 +50,19 @@ export class Village {
   })
   updatedAt: Date;
 
+  @Column({
+    name: 'truce_ends_at',
+  })
+  truceEndsAt: Date;
+
+  // Virtual field, so other players can see village truce status, but not truce duration
+  inTrucePeriod: boolean;
+
+  @AfterLoad()
+  updateTruceStatus(): void {
+    this.inTrucePeriod = this.truceEndsAt.getTime() > Date.now();
+  }
+
   @ManyToOne(() => User, (user) => user.villages, {
     eager: true,
   })
@@ -52,7 +72,7 @@ export class Village {
   user: User;
 
   @OneToMany(() => Facility, (facility) => facility.village)
-  facilities: Facility[];
+  facilities: Array<Facility>;
 
   @OneToMany(
     () => VillageResourceType,
@@ -61,13 +81,19 @@ export class Village {
       eager: true,
     },
   )
-  villagesResourceTypes: VillageResourceType[];
+  villagesResourceTypes: Array<VillageResourceType>;
 
   // The attacks this village started.
   @OneToMany(() => Attack, (attack) => attack.attackerVillage)
-  attacksFrom: Attack[];
+  attacksFrom: Array<Attack>;
 
   // The attacks other villages started on this village.
   @OneToMany(() => Attack, (attack) => attack.defenderVillage)
-  attacksTo: Attack[];
+  attacksTo: Array<Attack>;
+
+  @OneToOne(() => MapTile, (mapTile) => mapTile.village)
+  mapTile: MapTile;
+
+  @OneToOne(() => AutomatedVillageHistory, (history) => history.village)
+  automatedVillageHistory: AutomatedVillageHistory;
 }

@@ -383,15 +383,11 @@ CREATE TABLE public.users (
     email character varying(255) DEFAULT NULL::character varying,
     username character varying(50) NOT NULL,
     password character varying(255) NOT NULL,
-    eth_wallet_addresses character varying(42),
+    eth_wallet_addresses json,
     role character varying(255) DEFAULT NULL::character varying,
     new boolean DEFAULT true,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    email_confirmed boolean DEFAULT false,
-    email_confirmed_at timestamp with time zone DEFAULT now() NOT NULL,
-    last_verification_email_sent timestamp with time zone DEFAULT now() NOT NULL,
-    email_verification_token character varying(255) NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
 

@@ -13,14 +13,37 @@ const readAnyVillageProps = [
   'y',
   'population',
   'createdAt',
+  'inTrucePeriod',
   'user.username',
 ];
 const readOwnVillageProps = [
   ...readAnyVillageProps,
   'villagesResourceTypes',
   'facilities',
+  'incomingAttacksCount',
+  'isUnderAttack',
+  'truceEndsAt',
+  'inTrucePeriod',
 ];
 const readOwnAttackProps = ['id', 'createdAt', 'attackTime', 'defenderVillage'];
+const readAnyMapTilesProps = [
+  'id',
+  'villageName',
+  'x',
+  'y',
+  'type',
+  'terrainResourceType.type',
+  'isPassable',
+  'createdAt',
+  'updatedAt',
+  'village.id',
+  'village.name',
+  'village.x',
+  'village.y',
+  'village.population',
+  'village.created_at',
+  'village.user.username',
+];
 
 export const roles: RolesBuilder = new RolesBuilder();
 
@@ -38,7 +61,11 @@ roles
   .readOwn('attack', readOwnAttackProps)
 
   .createOwn('facilities')
-  .deleteOwn('facilities');
+  .deleteOwn('facilities')
+
+  .readAny('mapTile', readAnyMapTilesProps);
+
+roles.grant(AppRoles.Admin).createAny('mapTile');
 
 /* .grant(AppRoles.Admin) // switch to another role without breaking the chain
 .extend(AppRoles.User) // inherit role capabilities. also takes an array
