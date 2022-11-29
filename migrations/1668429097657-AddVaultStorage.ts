@@ -1,7 +1,5 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
-import { storageVault } from '../libs/game-rules/src/facilities/facilityDescriptors';
 import * as Promise from 'bluebird';
-import { RESOURCES } from '../libs/game-rules/src';
 
 const DB_FACILITY_TYPE_RESOURCE_TYPES = 'facility_types_resource_types';
 const DB_FACILITY_TYPE = 'facility_types';
@@ -10,6 +8,9 @@ const DB_RESOURCE_TYPES = 'resource_types';
 const DB_FACILITIES = 'facilities';
 const DB_VILLAGES_STORAGE_RESOURCE_TYPES = 'villages_storage_resource_types';
 
+const STORAGE_VAULT_FACILITY_TYPE = 'storage_vault';
+const STORAGE_VAULT_RESOURCE_TYPE = 'mkc';
+
 export class AddVaultStorage1668429097657 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     const [{ id: industry_id }] = await queryRunner.query(
@@ -17,10 +18,10 @@ export class AddVaultStorage1668429097657 implements MigrationInterface {
     );
     const [
       { id: facility_id },
-    ] = await queryRunner.query(`INSERT INTO ${DB_FACILITY_TYPE} (type, industry, parameters) VALUES 
-        ('${storageVault.facilityType}', ${industry_id}, NULL) RETURNING id;`);
+    ] = await queryRunner.query(`INSERT INTO ${DB_FACILITY_TYPE} (type, industry, parameters) VALUES
+        ('${STORAGE_VAULT_FACILITY_TYPE}', ${industry_id}, NULL) RETURNING id;`);
 
-    const resolveResourceType = async (type: RESOURCES) => {
+    const resolveResourceType = async (type) => {
       const [{ id: resource_id }] = await queryRunner.query(
         `SELECT id FROM ${DB_RESOURCE_TYPES} where type = '${type}'`,
       );
@@ -28,7 +29,7 @@ export class AddVaultStorage1668429097657 implements MigrationInterface {
       return resource_id;
     };
 
-    const resource_id = await resolveResourceType(storageVault.resourceType);
+    const resource_id = await resolveResourceType(STORAGE_VAULT_RESOURCE_TYPE);
 
     await queryRunner.query(`INSERT INTO ${DB_FACILITY_TYPE_RESOURCE_TYPES} (facility_type_id, resource_type_id) VALUES
                             (${facility_id}, ${resource_id})`);
@@ -45,7 +46,7 @@ export class AddVaultStorage1668429097657 implements MigrationInterface {
 
   public async down(queryRunner: QueryRunner): Promise<void> {
     const [{ id: facility_id }] = await queryRunner.query(
-      `SELECT id FROM ${DB_FACILITY_TYPE} WHERE type = '${storageVault.facilityType}'`,
+      `SELECT id FROM ${DB_FACILITY_TYPE} WHERE type = '${STORAGE_VAULT_FACILITY_TYPE}'`,
     );
 
     await queryRunner.query(
